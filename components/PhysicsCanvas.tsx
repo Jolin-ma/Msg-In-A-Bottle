@@ -81,9 +81,19 @@ const PhysicsCanvas = forwardRef<PhysicsCanvasHandle>(function PhysicsCanvas(
     });
     Matter.World.add(world.engine.world, mouseConstraint);
 
+    // The canvas backing store is scaled by devicePixelRatio, but the physics
+    // world uses CSS pixels — rescale Matter's mouse to match or the grab
+    // hit-test lands in the wrong place on HiDPI/scaled displays.
+    const applyMouseScale = () => {
+      const dpr = window.devicePixelRatio || 1;
+      Matter.Mouse.setScale(mouse, { x: 1 / dpr, y: 1 / dpr });
+    };
+    applyMouseScale();
+
     const handleResize = () => {
       const rect = applyCanvasSize();
       resizePhysicsWorld(world, rect.width, rect.height);
+      applyMouseScale();
     };
     window.addEventListener("resize", handleResize);
 

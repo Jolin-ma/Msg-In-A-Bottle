@@ -15,6 +15,10 @@ export function loadBottleImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
+export function loadBottleImages(srcs: string[]): Promise<HTMLImageElement[]> {
+  return Promise.all(srcs.map(loadBottleImage));
+}
+
 export function spawnBottle(
   engine: Matter.Engine,
   image: HTMLImageElement,
@@ -26,7 +30,7 @@ export function spawnBottle(
   const width = image.naturalWidth * scale;
   const height = image.naturalHeight * scale;
 
-  const body = Matter.Bodies.rectangle(x, y, width * 0.85, height * 0.6, {
+  const body = Matter.Bodies.rectangle(x, y, width, height, {
     restitution: 0.3,
     friction: 0.5,
     frictionAir: 0.01,
