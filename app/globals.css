@@ -1,0 +1,27 @@
+:root {
+  --bg: #ffffff;
+  --fg: #111111;
+  --muted: #999999;
+  --faint: #cccccc;
+  --font-display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-display);
+  overflow: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}

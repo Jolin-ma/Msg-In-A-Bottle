@@ -1,0 +1,47 @@
+.form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.input {
+  border: none;
+  outline: none;
+  background: transparent;
+  border-bottom: 1px solid var(--faint);
+  padding: 6px 0;
+  font: inherit;
+  font-size: 1rem;
+  text-align: center;
+  color: var(--fg);
+  width: 220px;
+}
+
+.input::placeholder {
+  color: var(--muted);
+}
+
+.submit {
+  border: none;
+  background: transparent;
+  padding: 6px 0;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.submit:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
+.error {
+  width: 100%;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #b3261e;
+  margin: 0;
+}

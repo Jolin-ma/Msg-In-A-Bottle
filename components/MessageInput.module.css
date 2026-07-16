@@ -1,0 +1,20 @@
+.input {
+  position: fixed;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(90vw, 640px);
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 24px;
+  font-weight: 400;
+  text-align: center;
+  color: var(--fg);
+}
+
+.input::placeholder {
+  color: var(--muted);
+}
