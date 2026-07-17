@@ -3,6 +3,11 @@ import Matter from "matter-js";
 export const LETTER_FONT_SIZE = 36;
 export const LETTER_FONT = `${LETTER_FONT_SIZE}px "Cormorant Garamond", Georgia, serif`;
 
+// The pile is decorative only — nothing is lost by trimming it, so once it
+// gets this large the oldest letters (the ones buried at the bottom) are
+// just dropped to keep the physics sim light.
+const MAX_LETTER_BODIES = 300;
+
 export interface LetterLayoutEntry {
   char: string;
   x: number;
@@ -59,5 +64,14 @@ export function spawnText(
   });
 
   Matter.World.add(engine.world, bodies);
+
+  const letterBodies = Matter.Composite.allBodies(engine.world).filter(
+    (body) => typeof body.plugin?.char === "string",
+  );
+  const overflow = letterBodies.length - MAX_LETTER_BODIES;
+  if (overflow > 0) {
+    Matter.World.remove(engine.world, letterBodies.slice(0, overflow));
+  }
+
   return bodies;
 }

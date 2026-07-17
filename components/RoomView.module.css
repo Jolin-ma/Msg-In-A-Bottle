@@ -1,14 +1,25 @@
 .readingArea {
   position: fixed;
   z-index: 1;
-  top: 16%;
+  top: 8%;
   left: 50%;
   transform: translateX(-50%);
   width: min(90vw, 640px);
+  max-height: 28vh;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 20px;
+  /* fade the top/bottom edges when scrolled, so clipped text reads as
+     intentional rather than abruptly cut off */
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black 16px,
+    black calc(100% - 16px),
+    transparent 100%
+  );
 }
 
 .error {
