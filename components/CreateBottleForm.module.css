@@ -1,9 +1,8 @@
 .form {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
+  gap: 14px;
 }
 
 .input {
@@ -19,11 +18,25 @@
   width: min(80vw, 220px);
 }
 
-.promptInput {
-  width: min(80vw, 320px);
+.input::placeholder {
+  color: var(--muted);
 }
 
-.input::placeholder {
+.message {
+  resize: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  border-bottom: 1px solid var(--faint);
+  padding: 6px 0;
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: center;
+  color: var(--fg);
+  width: min(100%, 420px);
+}
+
+.message::placeholder {
   color: var(--muted);
 }
 

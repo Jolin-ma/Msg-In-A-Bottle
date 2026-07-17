@@ -7,7 +7,7 @@ import styles from "./CreateBottleForm.module.css";
 export default function CreateBottleForm() {
   const router = useRouter();
   const [slug, setSlug] = useState("");
-  const [prompt, setPrompt] = useState("");
+  const [message, setMessage] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -26,7 +26,7 @@ export default function CreateBottleForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           slug: trimmed,
-          name: prompt.trim(),
+          message: message.trim(),
           isPublic,
         }),
       });
@@ -42,10 +42,12 @@ export default function CreateBottleForm() {
         return;
       }
 
+      const room = await response.json();
+
       setSlug("");
-      setPrompt("");
+      setMessage("");
       setPending(false);
-      router.push(`/welcome?bottle=${encodeURIComponent(trimmed)}&public=${isPublic}`);
+      router.push(`/welcome?bottle=${encodeURIComponent(room.slug)}&public=${isPublic}`);
     } catch {
       setError("Something went wrong. Please try again.");
       setPending(false);
@@ -62,12 +64,13 @@ export default function CreateBottleForm() {
         autoComplete="off"
         spellCheck={false}
       />
-      <input
-        className={`${styles.input} ${styles.promptInput}`}
-        value={prompt}
-        onChange={(event) => setPrompt(event.target.value)}
-        placeholder="something that made us happy today"
-        autoComplete="off"
+      <textarea
+        className={styles.message}
+        value={message}
+        onChange={(event) => setMessage(event.target.value)}
+        placeholder="Write your message... (optional — leave blank to let someone else write the first note)"
+        rows={2}
+        maxLength={500}
       />
       <div className={styles.visibility} role="radiogroup" aria-label="Bottle visibility">
         <button

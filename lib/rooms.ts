@@ -20,12 +20,20 @@ export async function getOrCreateRoom(slug: string) {
 export async function createOwnedRoom(
   slug: string,
   ownerId: string,
-  name?: string | null,
   isPublic = true,
+  initialMessage?: string | null,
 ) {
-  return prisma.room.create({
-    data: { slug, ownerId, isPublic, name: name || null },
+  const room = await prisma.room.create({
+    data: { slug, ownerId, isPublic },
   });
+
+  if (initialMessage) {
+    await prisma.message.create({
+      data: { text: initialMessage, roomId: room.id },
+    });
+  }
+
+  return room;
 }
 
 export async function getRoomsByOwner(ownerId: string) {

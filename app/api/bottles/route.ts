@@ -4,6 +4,8 @@ import { createOwnedRoom } from "@/lib/rooms";
 import { sanitizeSlug } from "@/lib/slug";
 import { Prisma } from "@/app/generated/prisma/client";
 
+const MAX_MESSAGE_LENGTH = 500;
+
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user) {
@@ -12,11 +14,13 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => null);
   const rawSlug: unknown = body?.slug;
-  const rawName: unknown = body?.name;
+  const rawMessage: unknown = body?.message;
   const rawIsPublic: unknown = body?.isPublic;
   if (
     typeof rawSlug !== "string" ||
-    (rawName !== undefined && typeof rawName !== "string") ||
+    (rawMessage !== undefined &&
+      rawMessage !== null &&
+      (typeof rawMessage !== "string" || rawMessage.length > MAX_MESSAGE_LENGTH)) ||
     (rawIsPublic !== undefined && typeof rawIsPublic !== "boolean")
   ) {
     return NextResponse.json({ error: "invalid_slug" }, { status: 400 });
@@ -27,11 +31,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_slug" }, { status: 400 });
   }
 
-  const name = typeof rawName === "string" ? rawName.trim().slice(0, 140) : null;
+  const message = typeof rawMessage === "string" ? rawMessage.trim() : null;
   const isPublic = typeof rawIsPublic === "boolean" ? rawIsPublic : true;
 
   try {
-    const room = await createOwnedRoom(slug, session.user.id, name, isPublic);
+    const room = await createOwnedRoom(slug, session.user.id, isPublic, message);
     return NextResponse.json(room, { status: 201 });
   } catch (error) {
     if (
