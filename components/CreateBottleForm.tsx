@@ -68,7 +68,7 @@ export default function CreateBottleForm() {
         className={styles.message}
         value={message}
         onChange={(event) => setMessage(event.target.value)}
-        placeholder="Write your message... (optional — leave blank to let someone else write the first note)"
+        placeholder="Write your message..."
         rows={2}
         maxLength={500}
       />
