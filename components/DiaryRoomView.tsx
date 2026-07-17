@@ -6,16 +6,22 @@ import BottleMessage from "./BottleMessage";
 import RoomSlugMarker from "./RoomSlugMarker";
 import styles from "./DiaryView.module.css";
 
-export interface DiaryEntryData {
+export interface DiaryRoomEntry {
   id: string;
   text: string;
   createdAt: string;
 }
 
-export default function DiaryView({
+export default function DiaryRoomView({
+  slug,
   initialEntries,
+  ownerName = null,
+  roomPrompt = null,
 }: {
-  initialEntries: DiaryEntryData[];
+  slug: string;
+  initialEntries: DiaryRoomEntry[];
+  ownerName?: string | null;
+  roomPrompt?: string | null;
 }) {
   const canvasRef = useRef<PhysicsCanvasHandle>(null);
   const composeRef = useRef<HTMLFormElement>(null);
@@ -45,10 +51,10 @@ export default function DiaryView({
     canvasRef.current?.spawnText(trimmed);
 
     try {
-      const response = await fetch("/api/diary", {
+      const response = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: trimmed }),
+        body: JSON.stringify({ roomSlug: slug, text: trimmed }),
       });
 
       if (!response.ok) {
@@ -98,7 +104,7 @@ export default function DiaryView({
         </div>
       </form>
       {error && <p className={styles.error}>{error}</p>}
-      <RoomSlugMarker />
+      <RoomSlugMarker ownerName={ownerName} roomPrompt={roomPrompt} />
     </>
   );
 }

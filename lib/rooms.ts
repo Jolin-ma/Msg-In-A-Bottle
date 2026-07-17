@@ -22,9 +22,10 @@ export async function createOwnedRoom(
   ownerId: string,
   isPublic = true,
   initialMessage?: string | null,
+  isDiary = false,
 ) {
   const room = await prisma.room.create({
-    data: { slug, ownerId, isPublic },
+    data: { slug, ownerId, isPublic, isDiary },
   });
 
   if (initialMessage) {

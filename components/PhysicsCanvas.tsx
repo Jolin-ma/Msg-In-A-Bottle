@@ -21,10 +21,22 @@ export interface PhysicsCanvasHandle {
   spawnText: (text: string) => void;
 }
 
-const MAX_DELTA_MS = 33;
+interface PhysicsCanvasProps {
+  // Returns the current viewport-relative Y (px) above which settled
+  // letters get pruned — measured live off a real DOM element (e.g. a
+  // diary's compose box) rather than a guessed fraction, so the cutoff
+  // tracks its actual on-screen position exactly. Not a physical wall
+  // (that would block the fall path entirely) — just periodic cleanup of
+  // already-resting letters that ended up at or above the line. Omit for
+  // no cap (the default, unbounded pile).
+  getCeilingY?: () => number | null | undefined;
+}
 
-const PhysicsCanvas = forwardRef<PhysicsCanvasHandle>(function PhysicsCanvas(
-  _props,
+const MAX_DELTA_MS = 33;
+const CEILING_BUFFER_PX = 100;
+
+const PhysicsCanvas = forwardRef<PhysicsCanvasHandle, PhysicsCanvasProps>(function PhysicsCanvas(
+  { getCeilingY },
   ref,
 ) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -97,6 +109,10 @@ const PhysicsCanvas = forwardRef<PhysicsCanvasHandle>(function PhysicsCanvas(
     };
     window.addEventListener("resize", handleResize);
 
+    const CEILING_CHECK_INTERVAL_MS = 250;
+    const SETTLED_SPEED_THRESHOLD = 0.8;
+    let lastCeilingCheck = 0;
+
     let lastTime = performance.now();
     const loop = (time: number) => {
       const delta = Math.min(time - lastTime, MAX_DELTA_MS);
@@ -105,6 +121,28 @@ const PhysicsCanvas = forwardRef<PhysicsCanvasHandle>(function PhysicsCanvas(
       Matter.Engine.update(world.engine, delta);
 
       const rect = canvas.getBoundingClientRect();
+
+      // Periodically prune letters that have already come to rest at or
+      // above the ceiling line — never touches bodies still actively
+      // falling through that height, so it can't interrupt anything
+      // mid-drop.
+      if (time - lastCeilingCheck > CEILING_CHECK_INTERVAL_MS) {
+        lastCeilingCheck = time;
+        const ceilingY = getCeilingY?.();
+        if (typeof ceilingY === "number") {
+          const threshold = ceilingY - CEILING_BUFFER_PX;
+          const settledAboveCeiling = Matter.Composite.allBodies(world.engine.world).filter(
+            (body) =>
+              typeof body.plugin?.char === "string" &&
+              body.position.y < threshold &&
+              body.speed < SETTLED_SPEED_THRESHOLD,
+          );
+          if (settledAboveCeiling.length > 0) {
+            Matter.World.remove(world.engine.world, settledAboveCeiling);
+          }
+        }
+      }
+
       renderFrame(ctx, world.engine, rect.width, rect.height);
 
       rafRef.current = requestAnimationFrame(loop);
@@ -120,6 +158,7 @@ const PhysicsCanvas = forwardRef<PhysicsCanvasHandle>(function PhysicsCanvas(
       worldRef.current = null;
       ctxRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <canvas ref={canvasRef} className={styles.canvas} />;

@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { getOrCreateRoom, markRoomRead } from "@/lib/rooms";
 import RoomView from "@/components/RoomView";
+import DiaryRoomView from "@/components/DiaryRoomView";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,24 @@ export default async function RoomPage({ params }: RoomPageProps) {
     await markRoomRead(room.id);
   }
 
+  const messages = room.messages.map((message) => ({
+    id: message.id,
+    text: message.text,
+    createdAt: message.createdAt.toISOString(),
+  }));
+
+  if (room.isDiary) {
+    return (
+      <DiaryRoomView
+        key={room.slug}
+        slug={room.slug}
+        ownerName={room.owner?.name ?? room.owner?.email ?? null}
+        roomPrompt={room.name}
+        initialEntries={[...messages].reverse()}
+      />
+    );
+  }
+
   return (
     <RoomView
       key={room.slug}
@@ -24,11 +43,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
       ownerName={room.owner?.name ?? room.owner?.email ?? null}
       roomPrompt={room.name}
       isPublic={room.isPublic}
-      initialMessages={room.messages.map((message) => ({
-        id: message.id,
-        text: message.text,
-        createdAt: message.createdAt.toISOString(),
-      }))}
+      initialMessages={messages}
     />
   );
 }

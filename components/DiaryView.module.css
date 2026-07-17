@@ -23,10 +23,10 @@
 .composeRow {
   position: fixed;
   z-index: 1;
-  bottom: 12%;
+  bottom: 24%;
   left: 50%;
   transform: translateX(-50%);
-  width: min(90vw, 480px);
+  width: min(92vw, 680px);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -35,6 +35,7 @@
 .input {
   flex: 1;
   min-width: 0;
+  resize: none;
   border: none;
   outline: none;
   background: transparent;
@@ -54,8 +55,15 @@
   opacity: 0.5;
 }
 
-.submit {
+.sendGroup {
+  position: relative;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.submit {
   border: none;
   background: transparent;
   padding: 0;
@@ -63,6 +71,7 @@
   font-size: 0.85rem;
   color: var(--muted);
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .submit:hover:not(:disabled) {
@@ -74,10 +83,27 @@
   cursor: default;
 }
 
+.bottleIcon {
+  height: 30px;
+  width: auto;
+  display: block;
+  animation: bob 2.8s ease-in-out infinite;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(4deg);
+  }
+}
+
 .error {
   position: fixed;
   z-index: 1;
-  bottom: calc(12% - 32px);
+  bottom: calc(24% - 32px);
   left: 50%;
   transform: translateX(-50%);
   margin: 0;

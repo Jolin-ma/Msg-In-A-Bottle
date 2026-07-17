@@ -57,7 +57,7 @@ export default async function DashboardPage() {
                     {bottle.name || bottle.slug}
                   </span>
                   <span className={styles.meta}>
-                    {bottle.isPublic ? "public" : "private"}
+                    {bottle.isDiary ? "diary" : bottle.isPublic ? "public" : "private"}
                     {" · "}
                     {count === 0
                       ? "empty — waiting for a message"

@@ -28,6 +28,7 @@ export default function CreateBottleForm() {
           slug: trimmed,
           message: message.trim(),
           isPublic: false,
+          isDiary,
         }),
       });
 
@@ -46,6 +47,7 @@ export default function CreateBottleForm() {
 
       setSlug("");
       setMessage("");
+      setIsDiary(false);
       setPending(false);
       router.push(`/welcome?bottle=${encodeURIComponent(room.slug)}&public=false`);
     } catch {
