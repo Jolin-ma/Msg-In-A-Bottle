@@ -1,12 +1,8 @@
-.wrapper {
+.trigger {
   position: fixed;
   z-index: 1;
   bottom: 16px;
   right: 16px;
-  max-width: min(90vw, 280px);
-}
-
-.trigger {
   border: none;
   background: transparent;
   padding: 0;
@@ -21,17 +17,56 @@
   color: var(--fg);
 }
 
-.sent {
-  margin: 0;
-  font-size: 0.7rem;
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: rgba(17, 17, 17, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal {
+  position: relative;
+  width: min(90vw, 420px);
+  background: var(--bg);
+  border: 1px solid var(--faint);
+  border-radius: 12px;
+  padding: 28px 24px 24px;
+  box-shadow: 0 20px 60px rgba(17, 17, 17, 0.18);
+}
+
+.close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
   color: var(--faint);
-  text-align: right;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: var(--fg);
+}
+
+.heading {
+  margin: 0 0 16px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--fg);
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 14px;
 }
 
 .textarea {
@@ -40,9 +75,9 @@
   outline: none;
   background: transparent;
   border-bottom: 1px solid var(--faint);
-  padding: 4px 0;
+  padding: 6px 0;
   font: inherit;
-  font-size: 0.8rem;
+  font-size: 1rem;
   color: var(--fg);
   width: 100%;
 }
@@ -51,23 +86,16 @@
   color: var(--muted);
 }
 
-.row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .email {
-  flex: 1;
-  min-width: 0;
   border: none;
   outline: none;
   background: transparent;
   border-bottom: 1px solid var(--faint);
-  padding: 4px 0;
+  padding: 6px 0;
   font: inherit;
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   color: var(--fg);
+  width: 100%;
 }
 
 .email::placeholder {
@@ -75,18 +103,18 @@
 }
 
 .submit {
-  flex-shrink: 0;
+  align-self: flex-end;
   border: none;
   background: transparent;
-  padding: 0;
+  padding: 4px 0;
   font: inherit;
-  font-size: 0.75rem;
-  color: var(--muted);
+  font-size: 0.95rem;
+  color: var(--fg);
   cursor: pointer;
 }
 
 .submit:hover:not(:disabled) {
-  color: var(--fg);
+  text-decoration: underline;
 }
 
 .submit:disabled {
@@ -96,6 +124,13 @@
 
 .error {
   margin: 0;
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   color: #b3261e;
+}
+
+.sent {
+  margin: 8px 0;
+  font-size: 1.1rem;
+  color: var(--fg);
+  text-align: center;
 }

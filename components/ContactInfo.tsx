@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import styles from "./ContactInfo.module.css";
 
 export default function ContactInfo() {
@@ -10,6 +10,23 @@ export default function ContactInfo() {
   const [pending, setPending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") close();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
+
+  function close() {
+    setOpen(false);
+    setText("");
+    setEmail("");
+    setError(null);
+    setSent(false);
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -37,51 +54,65 @@ export default function ContactInfo() {
     }
   }
 
-  if (sent) {
-    return (
-      <div className={styles.wrapper}>
-        <p className={styles.sent}>Thanks — got it.</p>
-      </div>
-    );
-  }
-
-  if (!open) {
-    return (
-      <div className={styles.wrapper}>
-        <button type="button" className={styles.trigger} onClick={() => setOpen(true)}>
-          Questions or feedback? Get in touch
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div className={styles.wrapper}>
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <textarea
-          className={styles.textarea}
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          placeholder="What's on your mind?"
-          rows={2}
-          maxLength={1000}
-          autoFocus
-        />
-        <div className={styles.row}>
-          <input
-            className={styles.email}
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="your email (optional, for a reply)"
-            autoComplete="email"
-          />
-          <button type="submit" className={styles.submit} disabled={pending || !text.trim()}>
-            Send
-          </button>
+    <>
+      <button type="button" className={styles.trigger} onClick={() => setOpen(true)}>
+        Questions or feedback? Get in touch
+      </button>
+
+      {open && (
+        <div className={styles.backdrop} onClick={close}>
+          <div
+            className={styles.modal}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Send feedback"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className={styles.close}
+              onClick={close}
+              aria-label="Close"
+            >
+              ×
+            </button>
+
+            {sent ? (
+              <p className={styles.sent}>Thanks — got it.</p>
+            ) : (
+              <form className={styles.form} onSubmit={handleSubmit}>
+                <h2 className={styles.heading}>Get in touch</h2>
+                <textarea
+                  className={styles.textarea}
+                  value={text}
+                  onChange={(event) => setText(event.target.value)}
+                  placeholder="What's on your mind?"
+                  rows={4}
+                  maxLength={1000}
+                  autoFocus
+                />
+                <input
+                  className={styles.email}
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="your email (optional, for a reply)"
+                  autoComplete="email"
+                />
+                {error && <p className={styles.error}>{error}</p>}
+                <button
+                  type="submit"
+                  className={styles.submit}
+                  disabled={pending || !text.trim()}
+                >
+                  Send
+                </button>
+              </form>
+            )}
+          </div>
         </div>
-        {error && <p className={styles.error}>{error}</p>}
-      </form>
-    </div>
+      )}
+    </>
   );
 }
