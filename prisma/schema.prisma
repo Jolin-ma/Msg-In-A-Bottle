@@ -40,3 +40,25 @@ model Message {
   roomId    String
   room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
 }
+
+enum FeedbackStatus {
+  NEW
+  READ
+  RESOLVED
+}
+
+enum FeedbackCategory {
+  INCOMING
+  BUG
+  LOVE
+}
+
+model Feedback {
+  id           String           @id @default(cuid())
+  text         String
+  contactEmail String?
+  status       FeedbackStatus   @default(NEW)
+  category     FeedbackCategory @default(INCOMING)
+  archivedAt   DateTime?
+  createdAt    DateTime         @default(now())
+}

@@ -1,0 +1,262 @@
+.page {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  padding: 56px 24px 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.header {
+  width: min(92vw, 900px);
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.gauges {
+  width: min(92vw, 900px);
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}
+
+.gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.gaugeValue {
+  font-size: 1.6rem;
+  color: var(--fg);
+}
+
+.gaugeUnread {
+  color: #c1442c;
+}
+
+.gaugeLabel {
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.bays {
+  width: min(92vw, 900px);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.bay {
+  display: flex;
+  flex-direction: column;
+  min-height: 160px;
+  border: 1px solid var(--faint);
+  border-radius: 10px;
+}
+
+.bayHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 12px 14px 0;
+}
+
+.bayLabel {
+  font-size: 1.05rem;
+  color: var(--fg);
+}
+
+.bayCount {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.bayHint {
+  padding: 2px 14px 10px;
+  font-size: 0.7rem;
+  color: var(--faint);
+}
+
+.bayCards {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--faint);
+}
+
+.bayEmpty {
+  padding: 20px 14px;
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.card {
+  border-bottom: 1px solid var(--faint);
+}
+
+.card:last-child {
+  border-bottom: none;
+}
+
+.card:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.cardHead {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.statusDot {
+  flex-shrink: 0;
+  margin-top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--faint);
+}
+
+.statusNEW .statusDot {
+  background: #c1442c;
+}
+
+.statusRESOLVED .statusDot {
+  background: #6b8f71;
+}
+
+.cardTimestamp {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.cardPreview {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 0.9rem;
+  color: var(--fg);
+}
+
+.cardBody {
+  padding: 0 12px 16px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cardText {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--fg);
+  white-space: pre-wrap;
+}
+
+.cardSource {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+
+.actionButton {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.actionButton:hover {
+  color: var(--fg);
+}
+
+.actionButtonQuiet {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--faint);
+  cursor: pointer;
+}
+
+.actionButtonQuiet:hover {
+  color: var(--muted);
+}
+
+.archiveSection {
+  width: min(92vw, 900px);
+}
+
+.archiveToggle {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.archiveToggle:hover {
+  color: var(--fg);
+}
+
+.archiveList {
+  margin-top: 12px;
+  border-top: 1px solid var(--faint);
+}
+
+.archiveRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--faint);
+}
+
+.archiveRow .cardPreview {
+  -webkit-line-clamp: 1;
+  color: var(--muted);
+}
