@@ -75,11 +75,16 @@ export default function BottlePhysics({ bottleSlugs = [] }: BottlePhysicsProps) 
 
     // A bottle is a message that's already out there — clicking one (as
     // opposed to dragging it) takes you to where you can read/reply to it.
+    // Pointer events (not mousedown/mouseup) — Matter's own Mouse instance
+    // above calls preventDefault() on touchstart/touchend for this same
+    // canvas, which suppresses the browser's synthetic mousedown/mouseup on
+    // real touchscreens. Pointer events aren't part of that suppression, so
+    // this is what makes tapping a bottle actually work on mobile.
     let downPos: { x: number; y: number } | null = null;
-    const handlePointerDown = (event: MouseEvent) => {
+    const handlePointerDown = (event: PointerEvent) => {
       downPos = { x: event.clientX, y: event.clientY };
     };
-    const handlePointerUp = (event: MouseEvent) => {
+    const handlePointerUp = (event: PointerEvent) => {
       if (!downPos) return;
       const dx = event.clientX - downPos.x;
       const dy = event.clientY - downPos.y;
@@ -95,8 +100,8 @@ export default function BottlePhysics({ bottleSlugs = [] }: BottlePhysicsProps) 
         router.push(slug ? `/${slug}` : "/preview");
       }
     };
-    canvas.addEventListener("mousedown", handlePointerDown);
-    canvas.addEventListener("mouseup", handlePointerUp);
+    canvas.addEventListener("pointerdown", handlePointerDown);
+    canvas.addEventListener("pointerup", handlePointerUp);
 
     let rafId: number | null = null;
     let lastTime = performance.now();
@@ -140,8 +145,8 @@ export default function BottlePhysics({ bottleSlugs = [] }: BottlePhysicsProps) 
       timeouts.forEach(clearTimeout);
       if (rafId !== null) cancelAnimationFrame(rafId);
       window.removeEventListener("resize", handleResize);
-      canvas.removeEventListener("mousedown", handlePointerDown);
-      canvas.removeEventListener("mouseup", handlePointerUp);
+      canvas.removeEventListener("pointerdown", handlePointerDown);
+      canvas.removeEventListener("pointerup", handlePointerUp);
       Matter.World.remove(world.engine.world, mouseConstraint);
       Matter.Mouse.clearSourceEvents(mouse);
       destroyPhysicsWorld(world);

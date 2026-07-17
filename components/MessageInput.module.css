@@ -93,6 +93,28 @@
   animation: bob 2.8s ease-in-out infinite;
 }
 
+@media (max-width: 420px) {
+  .input {
+    font-size: 18px;
+  }
+
+  .send {
+    font-size: 0.7rem;
+  }
+
+  .bottleIcon {
+    height: 26px;
+  }
+
+  .row {
+    gap: 8px;
+  }
+
+  .sendGroup {
+    gap: 4px;
+  }
+}
+
 .bottleIcon.floatAway {
   animation: floatAway var(--drift-duration, 7s) ease-in-out forwards;
 }

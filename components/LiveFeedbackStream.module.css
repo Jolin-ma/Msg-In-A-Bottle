@@ -1,6 +1,6 @@
 .panel {
   position: relative;
-  width: min(92vw, 900px);
+  width: min(100%, 900px);
   border: 1px solid var(--faint);
   border-radius: 10px;
   overflow: hidden;

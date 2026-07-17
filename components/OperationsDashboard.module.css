@@ -10,7 +10,7 @@
 }
 
 .header {
-  width: min(92vw, 900px);
+  width: min(100%, 900px);
   text-align: center;
 }
 
@@ -28,10 +28,10 @@
 }
 
 .gauges {
-  width: min(92vw, 900px);
+  width: min(100%, 900px);
   display: flex;
   justify-content: center;
-  gap: 40px;
+  gap: clamp(16px, 8vw, 40px);
 }
 
 .gauge {
@@ -58,7 +58,7 @@
 }
 
 .bays {
-  width: min(92vw, 900px);
+  width: min(100%, 900px);
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 20px;
@@ -226,7 +226,7 @@
 }
 
 .archiveSection {
-  width: min(92vw, 900px);
+  width: min(100%, 900px);
 }
 
 .archiveToggle {
