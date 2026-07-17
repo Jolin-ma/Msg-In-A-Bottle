@@ -8,7 +8,7 @@ export default function CreateBottleForm() {
   const router = useRouter();
   const [slug, setSlug] = useState("");
   const [message, setMessage] = useState("");
-  const [isPublic, setIsPublic] = useState(true);
+  const [isDiary, setIsDiary] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -27,7 +27,7 @@ export default function CreateBottleForm() {
         body: JSON.stringify({
           slug: trimmed,
           message: message.trim(),
-          isPublic,
+          isPublic: false,
         }),
       });
 
@@ -47,7 +47,7 @@ export default function CreateBottleForm() {
       setSlug("");
       setMessage("");
       setPending(false);
-      router.push(`/welcome?bottle=${encodeURIComponent(room.slug)}&public=${isPublic}`);
+      router.push(`/welcome?bottle=${encodeURIComponent(room.slug)}&public=false`);
     } catch {
       setError("Something went wrong. Please try again.");
       setPending(false);
@@ -72,24 +72,24 @@ export default function CreateBottleForm() {
         rows={2}
         maxLength={500}
       />
-      <div className={styles.visibility} role="radiogroup" aria-label="Bottle visibility">
+      <div className={styles.framing} role="radiogroup" aria-label="Bottle framing">
         <button
           type="button"
           role="radio"
-          aria-checked={isPublic}
-          className={`${styles.visibilityOption} ${isPublic ? styles.visibilityActive : ""}`}
-          onClick={() => setIsPublic(true)}
+          aria-checked={!isDiary}
+          className={`${styles.framingOption} ${!isDiary ? styles.framingActive : ""}`}
+          onClick={() => setIsDiary(false)}
         >
-          public — cast into the sea
+          A private harbor — a letter for someone
         </button>
         <button
           type="button"
           role="radio"
-          aria-checked={!isPublic}
-          className={`${styles.visibilityOption} ${!isPublic ? styles.visibilityActive : ""}`}
-          onClick={() => setIsPublic(false)}
+          aria-checked={isDiary}
+          className={`${styles.framingOption} ${isDiary ? styles.framingActive : ""}`}
+          onClick={() => setIsDiary(true)}
         >
-          private — just between us
+          Diary — a secret cast to the sea
         </button>
       </div>
       <button type="submit" className={styles.submit} disabled={pending}>

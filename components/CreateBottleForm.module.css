@@ -40,34 +40,36 @@
   color: var(--muted);
 }
 
-.visibility {
+.framing {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
 }
 
-.visibilityOption {
+.framingOption {
   border: none;
   border-bottom: 1px solid transparent;
   background: transparent;
   padding: 4px 0;
   font: inherit;
   font-size: 0.8rem;
+  font-style: italic;
   color: var(--faint);
   cursor: pointer;
+  text-align: center;
 }
 
-.visibilityOption:hover {
+.framingOption:hover {
   color: var(--muted);
 }
 
-.visibilityActive {
+.framingActive {
   color: var(--fg);
   border-bottom-color: var(--fg);
 }
 
-.visibilityActive:hover {
+.framingActive:hover {
   color: var(--fg);
 }
 
