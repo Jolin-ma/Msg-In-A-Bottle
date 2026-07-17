@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getRoomsByOwner } from "@/lib/rooms";
+import ContactInfo from "@/components/ContactInfo";
 import CreateBottleForm from "@/components/CreateBottleForm";
 import RemoveBottleButton from "@/components/RemoveBottleButton";
 import SignOutButton from "@/components/SignOutButton";
@@ -70,6 +71,8 @@ export default async function DashboardPage() {
           );
         })}
       </div>
+
+      <ContactInfo />
     </div>
   );
 }
