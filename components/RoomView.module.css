@@ -1,7 +1,7 @@
 .readingArea {
   position: fixed;
   z-index: 1;
-  top: 8%;
+  top: max(8%, 140px);
   left: 50%;
   transform: translateX(-50%);
   width: min(90vw, 640px);
