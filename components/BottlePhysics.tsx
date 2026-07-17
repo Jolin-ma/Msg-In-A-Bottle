@@ -23,7 +23,11 @@ const SPAWN_STAGGER_MS = 180;
 const MAX_DELTA_MS = 33;
 const CLICK_MOVE_THRESHOLD = 6;
 
-export default function BottlePhysics() {
+interface BottlePhysicsProps {
+  bottleSlugs?: string[];
+}
+
+export default function BottlePhysics({ bottleSlugs = [] }: BottlePhysicsProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const router = useRouter();
 
@@ -85,9 +89,10 @@ export default function BottlePhysics() {
       const rect = canvas.getBoundingClientRect();
       const point = { x: event.clientX - rect.left, y: event.clientY - rect.top };
       const bodies = Matter.Composite.allBodies(world.engine.world);
-      const hit = Matter.Query.point(bodies, point).some((body) => body.plugin?.image);
+      const [hit] = Matter.Query.point(bodies, point).filter((body) => body.plugin?.image);
       if (hit) {
-        router.push("/preview");
+        const slug = hit.plugin?.slug as string | null | undefined;
+        router.push(slug ? `/${slug}` : "/preview");
       }
     };
     canvas.addEventListener("mousedown", handlePointerDown);
@@ -120,7 +125,10 @@ export default function BottlePhysics() {
             const image = images[Math.floor(Math.random() * images.length)];
             const width = MIN_WIDTH + Math.random() * (MAX_WIDTH - MIN_WIDTH);
             const x = rect.width * (0.1 + Math.random() * 0.8);
-            spawnBottle(world.engine, image, x, -100, width);
+            const slug = bottleSlugs.length
+              ? bottleSlugs[i % bottleSlugs.length]
+              : null;
+            spawnBottle(world.engine, image, x, -100, width, slug);
           }, i * SPAWN_STAGGER_MS);
           timeouts.push(timeout);
         }
@@ -138,7 +146,7 @@ export default function BottlePhysics() {
       Matter.Mouse.clearSourceEvents(mouse);
       destroyPhysicsWorld(world);
     };
-  }, [router]);
+  }, [router, bottleSlugs]);
 
   return <canvas ref={canvasRef} className={styles.canvas} />;
 }

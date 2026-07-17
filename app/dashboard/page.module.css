@@ -27,7 +27,7 @@
   width: min(90vw, 560px);
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 12px;
 }
 
 .empty {
@@ -37,36 +37,64 @@
 
 .bottle {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 4px;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.bottle:hover {
+  background: rgba(0, 0, 0, 0.035);
 }
 
 .bottleLink {
-  font-size: 1.3rem;
-  color: var(--fg);
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 8px;
+  color: inherit;
 }
 
-.bottleLink:hover {
-  text-decoration: underline;
+.iconWrap {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
 }
 
-.count {
-  font-size: 0.75rem;
-  color: var(--muted);
+.icon {
+  height: 48px;
+  width: auto;
 }
 
-.messages {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
+.unreadDot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #c1442c;
+  border: 2px solid var(--bg);
+}
+
+.info {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  min-width: 0;
 }
 
-.message {
-  font-size: 1rem;
+.slug {
+  font-size: 1.2rem;
   color: var(--fg);
-  border-bottom: 1px solid #f0f0f0;
-  padding-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  font-size: 0.75rem;
+  color: var(--muted);
 }

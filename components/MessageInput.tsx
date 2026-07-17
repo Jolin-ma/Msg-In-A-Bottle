@@ -5,9 +5,11 @@ import { DRIFT_DURATION_MS } from "@/lib/driftTiming";
 import styles from "./MessageInput.module.css";
 
 interface MessageInputProps {
-  onSubmit: (text: string) => void;
+  onSubmit: (text: string, makePrivate: boolean) => void;
   placeholder?: string;
   disabled?: boolean;
+  hideControls?: boolean;
+  isPublicBottle?: boolean;
 }
 
 function randomBetween(min: number, max: number) {
@@ -45,15 +47,18 @@ export default function MessageInput({
   onSubmit,
   placeholder = "Type something...",
   disabled = false,
+  hideControls = false,
+  isPublicBottle = false,
 }: MessageInputProps) {
   const [value, setValue] = useState("");
+  const [makePrivate, setMakePrivate] = useState(false);
   const [floating, setFloating] = useState(false);
   const [driftStyle, setDriftStyle] = useState<CSSProperties>({});
 
   function submit() {
     const trimmed = value.trim();
     if (!trimmed || disabled) return;
-    onSubmit(trimmed);
+    onSubmit(trimmed, makePrivate);
     setValue("");
     setDriftStyle(randomDriftStyle());
     setFloating(true);
@@ -64,35 +69,54 @@ export default function MessageInput({
   }
 
   return (
-    <div className={styles.row}>
-      <input
-        className={styles.input}
-        type="text"
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        disabled={disabled}
-        autoComplete="off"
-        spellCheck={false}
-      />
-      <div className={styles.sendGroup}>
+    <div className={styles.wrapper}>
+      <div className={styles.row}>
+        {!hideControls && (
+          <input
+            className={styles.input}
+            type="text"
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled}
+            autoComplete="off"
+            spellCheck={false}
+          />
+        )}
+        <div className={styles.sendGroup}>
+          {!hideControls && (
+            <button
+              type="button"
+              className={styles.send}
+              onClick={submit}
+              disabled={disabled || !value.trim()}
+            >
+              press enter to send
+            </button>
+          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/bottle.png"
+            alt=""
+            className={`${styles.bottleIcon} ${floating ? styles.floatAway : ""}`}
+            style={floating ? driftStyle : undefined}
+          />
+        </div>
+      </div>
+
+      {isPublicBottle && !hideControls && (
         <button
           type="button"
-          className={styles.send}
-          onClick={submit}
-          disabled={disabled || !value.trim()}
+          className={styles.privacyToggle}
+          onClick={() => setMakePrivate((current) => !current)}
+          disabled={disabled}
         >
-          press enter to send
+          {makePrivate
+            ? "✓ this will become just between us"
+            : "keep this just between us instead of public?"}
         </button>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/bottle.png"
-          alt=""
-          className={`${styles.bottleIcon} ${floating ? styles.floatAway : ""}`}
-          style={floating ? driftStyle : undefined}
-        />
-      </div>
+      )}
     </div>
   );
 }

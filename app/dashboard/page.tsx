@@ -2,10 +2,13 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getRoomsByOwner } from "@/lib/rooms";
 import CreateBottleForm from "@/components/CreateBottleForm";
+import RemoveBottleButton from "@/components/RemoveBottleButton";
 import SignOutButton from "@/components/SignOutButton";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
+
+const BOTTLE_IMAGES = ["/bottle1.png", "/bottle2.png", "/bottle3.png"];
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -28,26 +31,44 @@ export default async function DashboardPage() {
         {bottles.length === 0 && (
           <p className={styles.empty}>No bottles yet. Create one above.</p>
         )}
-        {bottles.map((bottle) => (
-          <section key={bottle.id} className={styles.bottle}>
-            <a className={styles.bottleLink} href={`/${bottle.slug}`}>
-              /{bottle.slug}
-            </a>
-            <span className={styles.count}>
-              {bottle.messages.length} message
-              {bottle.messages.length === 1 ? "" : "s"} collected
-            </span>
-            {bottle.messages.length > 0 && (
-              <ul className={styles.messages}>
-                {bottle.messages.map((message) => (
-                  <li key={message.id} className={styles.message}>
-                    {message.text}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        ))}
+        {bottles.map((bottle, index) => {
+          const latest = bottle.messages[0];
+          const unread =
+            Boolean(latest) &&
+            (!bottle.lastReadAt || latest.createdAt > bottle.lastReadAt);
+          const count = bottle._count.messages;
+
+          return (
+            <div key={bottle.id} className={styles.bottle}>
+              <a className={styles.bottleLink} href={`/${bottle.slug}`}>
+                <span className={styles.iconWrap}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={BOTTLE_IMAGES[index % BOTTLE_IMAGES.length]}
+                    alt=""
+                    className={styles.icon}
+                  />
+                  {unread && <span className={styles.unreadDot} aria-label="unread" />}
+                </span>
+
+                <span className={styles.info}>
+                  <span className={styles.slug}>
+                    {bottle.name || bottle.slug}
+                  </span>
+                  <span className={styles.meta}>
+                    {bottle.isPublic ? "public" : "private"}
+                    {" · "}
+                    {count === 0
+                      ? "empty — waiting for a message"
+                      : `${count} message${count === 1 ? "" : "s"} collected`}
+                    {unread && " · new"}
+                  </span>
+                </span>
+              </a>
+              <RemoveBottleButton slug={bottle.slug} hasMessages={count > 0} />
+            </div>
+          );
+        })}
       </div>
     </div>
   );

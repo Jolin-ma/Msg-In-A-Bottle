@@ -17,14 +17,14 @@
 }
 
 .ownerName {
-  font-size: 0.75rem;
-  color: var(--muted);
+  font-size: 1rem;
+  color: #4a4a4a;
 }
 
 .prompt {
-  font-size: 0.7rem;
+  font-size: 0.95rem;
   font-style: italic;
-  color: var(--faint);
+  color: #6b6b6b;
 }
 
 .exit {
@@ -63,7 +63,7 @@
 }
 
 .exitLabel {
-  font-size: 0.65rem;
+  font-size: 0.85rem;
   color: var(--faint);
   white-space: nowrap;
 }

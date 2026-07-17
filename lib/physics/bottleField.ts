@@ -4,6 +4,7 @@ interface BottlePluginData {
   image: HTMLImageElement;
   width: number;
   height: number;
+  slug: string | null;
 }
 
 export function loadBottleImage(src: string): Promise<HTMLImageElement> {
@@ -25,6 +26,7 @@ export function spawnBottle(
   x: number,
   y: number,
   targetWidth: number,
+  slug: string | null = null,
 ): Matter.Body {
   const scale = targetWidth / image.naturalWidth;
   const width = image.naturalWidth * scale;
@@ -37,7 +39,7 @@ export function spawnBottle(
     angle: (Math.random() - 0.5) * 1.4,
   });
 
-  const plugin: BottlePluginData = { image, width, height };
+  const plugin: BottlePluginData = { image, width, height, slug };
   body.plugin = plugin;
 
   Matter.World.add(engine.world, body);

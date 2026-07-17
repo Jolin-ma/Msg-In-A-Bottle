@@ -1,6 +1,6 @@
 # Msg In A Bottle — Progress Log
 
-Latest session: 2026-07-17 (previous: 2026-07-16)
+Latest session: 2026-07-17c (previous: 2026-07-17b, 2026-07-17, 2026-07-16)
 
 ## What this is
 
@@ -125,26 +125,128 @@ under the icon (not the whole row).
   `Start-Process` for visual review, with the user reporting back what they saw
   and iterating from there.
 
+## What got built 2026-07-17b (real database)
+
+- `DATABASE_URL` in `.env` now points at a live Neon Postgres project (pooled
+  connection string, `sslmode=require&channel_binding=require`). `.env` is
+  gitignored, confirmed via `git check-ignore`.
+- Ran the first migration: `npx prisma migrate dev --name init` →
+  `prisma/migrations/20260717143950_init/`. Schema (including the nullable
+  `passwordHash`) is now live in Neon.
+- `npx tsc --noEmit`, `npm run lint` (0 errors, the one pre-existing
+  `no-page-custom-font` warning in `app/layout.tsx` is unrelated), and the dev
+  server all clean/healthy against the real DB.
+- End-to-end verification via `curl` against the running dev server, using a
+  disposable `test-verify@example.com` account (registered, exercised, then
+  deleted afterward — DB is back to empty of test data):
+  - `POST /api/auth/register` → 201, row lands in `User`.
+  - Credentials sign-in via the CSRF handshake (`/api/auth/csrf` →
+    `/api/auth/callback/credentials`) → real session with a DB-backed
+    `user.id`.
+  - Created one public and one private bottle via `POST /api/bottles`.
+  - `GET /api/rooms/random` called 5x: only ever returned the public slug —
+    private bottle confirmed never leaking through the random-bottle endpoint.
+  - Dropped an anonymous reply into each bottle via `POST /api/messages`, then
+    `GET /api/rooms/[slug]` confirmed the owner sees that reply as the new
+    (only) latest message — matches the `take: 1, desc` "one note currently in
+    the bottle" model.
+  - `/welcome` gating: 200 when authed, 307 redirect when not.
+  - Cleanup done via `npx prisma db execute` (raw SQL) rather than the Prisma
+    JS client directly — the generated client at `app/generated/prisma` is
+    TypeScript-only (no compiled `.js`), so it can't be `node`-required
+    ad hoc; either run through the app itself or use `prisma db execute` /
+    `tsx` for one-off scripts against it going forward.
+- **Not yet verified in-session** (needs a real browser, not curl): Google
+  OAuth completing end-to-end now that the `jwt` callback's
+  `prisma.user.upsert` has a live DB to write to; the physics rendering itself;
+  the post-send auto-redirect to `/dashboard` firing at the right time. Dev
+  server was left running on `http://localhost:3000` and opened in the
+  system browser for manual visual review.
+
+## What got built 2026-07-17c (dashboard, letter persistence, sharing controls, deploy prep)
+
+Google sign-in was confirmed working in the user's real browser this session
+(the item the 2026-07-17b log left unverified). Everything below was verified
+against the live Neon DB via `curl` for data/API correctness, with disposable
+test accounts/bottles cleaned up via `npx prisma db execute` afterward —
+matches the established no-browser-automation workflow — but the *visual*
+result of items 1 and 2 below (does the drift animation actually look right
+now, does the letter cascade look good) is still only user-confirmed for the
+bug report itself, not yet re-confirmed after the fix.
+
+### 1. Fixed the send-drift animation cutting off early
+`RoomView` was unmounting `MessageInput` the instant the send request
+resolved (swapping straight to `BottleReleased`), killing the bottle icon's
+7-second CSS drift (`lib/driftTiming.ts`) after under a second. `MessageInput`
+now stays mounted through the release — a new `hideControls` prop hides just
+the text field/send button — so the icon finishes its drift while
+`BottleReleased` shows alongside it.
+
+### 2. Persistent letter pile across visits
+Replies used to only ever exist as physics letters during the single visit
+that sent them — reopening a bottle always started from an empty canvas.
+`lib/rooms.ts#getOrCreateRoom` now fetches up to the last 60 messages
+(`PILE_HISTORY_LIMIT`) instead of just the latest one; `RoomView` treats the
+newest as the readable note (unchanged) and replays everything older as a
+staggered (~90ms apart) cascade of falling letters on mount, so a bottle's
+sediment now visibly grows every time someone replies.
+
+### 3. Dashboard redesign — no more spoilers, unread tracking
+`app/dashboard/page.tsx` no longer dumps every message's raw text in a bare
+list. Each bottle is now a card (`bottle1/2/3.png` cycled by index, name/slug,
+public/private, message count) — you have to open a bottle to read what's in
+it. Added `Room.lastReadAt` (migration `20260717151157_room_last_read_at`):
+visiting a bottle as its owner (`app/[slug]/page.tsx`) marks it read; the
+dashboard shows a red dot + "· new" when the latest message postdates it.
+
+### 4. Delete vs. release a bottle
+Bottles are two-way once replied to, so a hard delete would destroy the other
+person's message without their say. `DELETE /api/rooms/[slug]`
+(`app/api/rooms/[slug]/route.ts`) now branches on `lib/rooms.ts`'s new
+helpers: `deleteEmptyRoom` (hard delete, only when message count is 0) vs.
+`releaseRoomOwnership` (clears `ownerId`, leaves the room/messages intact and
+still reachable by URL — just drops off the owner's dashboard). Dashboard
+cards get a small "×" (`components/RemoveBottleButton.tsx`) with a
+`window.confirm` whose copy differs per case.
+
+### 5. Sign-in page bottles now link to real bottles
+`lib/rooms.ts#getRandomPublicRoomSlugs(limit)` samples real public bottle
+slugs; `app/page.tsx` fetches up to 7 and passes them into
+`components/BottlePhysics.tsx`, which now tags each decorative bottle body
+with a real slug (`lib/physics/bottleField.ts#spawnBottle`'s new `slug` param)
+and navigates there on click — falls back to `/preview` only when there are
+zero public bottles yet.
+
+### 6. Reply-time "make this private" option
+Replying to a public bottle now shows a toggle — "keep this just between us
+instead of public?" — in `components/MessageInput.tsx` (only rendered when
+the bottle is currently public). `POST /api/messages` accepts an optional
+`makePrivate` flag and calls the new `lib/rooms.ts#makeRoomPrivate` (sets
+`isPublic: false`) after the message is created; verified the room stops
+appearing via `/api/rooms/random` immediately after. `RoomView` tracks this
+locally so the release confirmation shows "Delivered." (private copy) instead
+of the public "find another bottle" link when the toggle was checked.
+
+### 7. Deploy prep
+`npm run build` confirmed clean (Turbopack production build, typecheck, all
+12 routes). `package.json` already has `"postinstall": "prisma generate"`, so
+a fresh Vercel build will regenerate the client automatically. No separate
+migration step is needed for first deploy — production will point at the
+same Neon database that dev has already been migrating against directly all
+session.
+
 ## Blocked / next steps
 
-- **Still nothing has touched a real database.** `DATABASE_URL` in `.env` is
-  still Prisma's placeholder. This blocks, end-to-end: Credentials sign-up/
-  sign-in, Google sign-in completing (the `jwt` callback's `prisma.user.upsert`
-  needs a DB), `/dashboard`, `/welcome`, and every real `/[slug]` room page
-  (currently 500s on `ECONNREFUSED`).
-- No migrations have ever been run (`prisma/migrations/` is empty) — the first
-  migration needs to cover the schema as it now stands, including the
-  `passwordHash` nullable change: `npx prisma migrate dev --name init`.
-- Double-check the Google Cloud Console OAuth client has the exact authorized
-  redirect URI registered: `http://localhost:3000/api/auth/callback/google`
-  (plus the production equivalent once deployed).
-- Next session, once a real Postgres connection is in place: sign in via both
-  Credentials and Google; create a public bottle and a private bottle; confirm
-  the private one never appears via `/api/rooms/random`; drop a reply
-  anonymously from a second session on each; confirm the owner sees the reply as
-  the new "latest" message on revisit; confirm the post-send auto-redirect to
-  `/dashboard` actually fires (untestable in `/preview` since its send always
-  fails without a DB).
-- Consider upgrading the sign-in page's clickable bottles to route to real
-  per-bottle slugs (fetched from the DB) instead of always landing on
-  `/preview`, once there's real public-bottle data to draw from.
+- **Deploying now**: pushing this session's work to GitHub
+  (`Jolin-ma/Msg-In-A-Bottle`), then the user connects the repo via Vercel's
+  "Import Project" (requires their Vercel account, not doable from here).
+  Still needed after that: set `DATABASE_URL`, `AUTH_SECRET`,
+  `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` as production env vars in the Vercel
+  project (no MCP tool available to set these — must be done in the Vercel
+  dashboard), and add the production callback URL
+  (`https://<domain>/api/auth/callback/google`) to the Google Cloud Console
+  OAuth client's authorized redirect URIs.
+- `PILE_HISTORY_LIMIT` (60) is an unvalidated guess at a reasonable
+  client-side physics ceiling — if a heavily-replied bottle ever feels
+  sluggish on open, that's the first knob to turn (lower the cap, or spawn
+  fewer at once / less staggered).

@@ -1,4 +1,5 @@
-import { getOrCreateRoom } from "@/lib/rooms";
+import { auth } from "@/lib/auth";
+import { getOrCreateRoom, markRoomRead } from "@/lib/rooms";
 import RoomView from "@/components/RoomView";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,11 @@ interface RoomPageProps {
 export default async function RoomPage({ params }: RoomPageProps) {
   const { slug } = await params;
   const room = await getOrCreateRoom(slug);
+
+  const session = await auth();
+  if (session?.user && session.user.id === room.ownerId) {
+    await markRoomRead(room.id);
+  }
 
   return (
     <RoomView

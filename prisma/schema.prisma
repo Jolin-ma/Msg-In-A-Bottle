@@ -22,14 +22,15 @@ model User {
 }
 
 model Room {
-  id        String    @id @default(cuid())
-  slug      String    @unique
-  name      String?
-  createdAt DateTime  @default(now())
-  messages  Message[]
-  isPublic  Boolean   @default(true)
-  ownerId   String?
-  owner     User?     @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  id         String    @id @default(cuid())
+  slug       String    @unique
+  name       String?
+  createdAt  DateTime  @default(now())
+  messages   Message[]
+  isPublic   Boolean   @default(true)
+  ownerId    String?
+  owner      User?     @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  lastReadAt DateTime?
 }
 
 model Message {

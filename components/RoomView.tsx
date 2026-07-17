@@ -37,6 +37,23 @@ export default function RoomView({
   const [released, setReleased] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSubmittedOnce, setHasSubmittedOnce] = useState(false);
+  const [wentPrivate, setWentPrivate] = useState(false);
+
+  // initialMessages is newest-first; everything but the newest is already
+  // "read" history, so it replays as a pre-fallen letter pile on open —
+  // the newest one is shown as static readable text instead (below).
+  const history = initialMessages.slice(1).reverse();
+
+  useEffect(() => {
+    const HISTORY_SPAWN_STAGGER_MS = 90;
+    const timeouts = history.map((message, index) =>
+      window.setTimeout(() => {
+        canvasRef.current?.spawnText(message.text);
+      }, index * HISTORY_SPAWN_STAGGER_MS),
+    );
+    return () => timeouts.forEach((timeout) => window.clearTimeout(timeout));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!released) return;
@@ -46,7 +63,7 @@ export default function RoomView({
     return () => window.clearTimeout(timeout);
   }, [released, router]);
 
-  async function handleSubmit(text: string) {
+  async function handleSubmit(text: string, makePrivate: boolean) {
     canvasRef.current?.spawnText(text);
     setHasSubmittedOnce(true);
     setPending(true);
@@ -56,7 +73,7 @@ export default function RoomView({
       const response = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomSlug: slug, text }),
+        body: JSON.stringify({ roomSlug: slug, text, makePrivate }),
       });
 
       if (!response.ok) {
@@ -66,6 +83,7 @@ export default function RoomView({
       }
 
       setPending(false);
+      if (makePrivate) setWentPrivate(true);
       setReleased(true);
     } catch {
       setPending(false);
@@ -82,21 +100,21 @@ export default function RoomView({
   return (
     <>
       <PhysicsCanvas ref={canvasRef} />
-      {released ? (
-        <BottleReleased isPublic={isPublic} />
-      ) : (
-        <>
-          {initialMessages.length > 0 && (
-            <BottleMessage text={initialMessages[0].text} />
-          )}
-          <MessageInput
-            onSubmit={handleSubmit}
-            placeholder={placeholder}
-            disabled={pending}
-          />
-          {error && <p className={styles.error}>{error}</p>}
-        </>
+      {released && <BottleReleased isPublic={isPublic && !wentPrivate} />}
+      {!released && initialMessages.length > 0 && (
+        <BottleMessage text={initialMessages[0].text} />
       )}
+      {/* Stays mounted through the release so the bottle-icon drift
+          animation (started on submit) can finish playing instead of
+          getting unmounted mid-flight; its own controls hide once released. */}
+      <MessageInput
+        onSubmit={handleSubmit}
+        placeholder={placeholder}
+        disabled={pending || released}
+        hideControls={released}
+        isPublicBottle={isPublic}
+      />
+      {error && <p className={styles.error}>{error}</p>}
       <RoomSlugMarker ownerName={ownerName} roomPrompt={roomPrompt} />
     </>
   );
