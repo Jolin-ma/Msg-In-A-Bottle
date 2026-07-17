@@ -6,7 +6,7 @@ export async function getOrCreateRoom(slug: string) {
     update: {},
     create: { slug, isPublic: true },
     include: {
-      messages: { orderBy: { createdAt: "asc" } },
+      messages: { orderBy: { createdAt: "desc" }, take: 1 },
       owner: { select: { name: true, email: true } },
     },
   });
@@ -16,9 +16,10 @@ export async function createOwnedRoom(
   slug: string,
   ownerId: string,
   name?: string | null,
+  isPublic = true,
 ) {
   return prisma.room.create({
-    data: { slug, ownerId, isPublic: true, name: name || null },
+    data: { slug, ownerId, isPublic, name: name || null },
   });
 }
 

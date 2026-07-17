@@ -8,6 +8,7 @@ export default function CreateBottleForm() {
   const router = useRouter();
   const [slug, setSlug] = useState("");
   const [prompt, setPrompt] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -23,7 +24,11 @@ export default function CreateBottleForm() {
       const response = await fetch("/api/bottles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: trimmed, name: prompt.trim() }),
+        body: JSON.stringify({
+          slug: trimmed,
+          name: prompt.trim(),
+          isPublic,
+        }),
       });
 
       if (!response.ok) {
@@ -40,7 +45,7 @@ export default function CreateBottleForm() {
       setSlug("");
       setPrompt("");
       setPending(false);
-      router.refresh();
+      router.push(`/welcome?bottle=${encodeURIComponent(trimmed)}&public=${isPublic}`);
     } catch {
       setError("Something went wrong. Please try again.");
       setPending(false);
@@ -58,12 +63,19 @@ export default function CreateBottleForm() {
         spellCheck={false}
       />
       <input
-        className={styles.input}
+        className={`${styles.input} ${styles.promptInput}`}
         value={prompt}
         onChange={(event) => setPrompt(event.target.value)}
         placeholder="something that made us happy today"
         autoComplete="off"
       />
+      <button
+        type="button"
+        className={styles.toggle}
+        onClick={() => setIsPublic((value) => !value)}
+      >
+        {isPublic ? "public — cast into the sea" : "private — just between us"}
+      </button>
       <button type="submit" className={styles.submit} disabled={pending}>
         + New bottle
       </button>

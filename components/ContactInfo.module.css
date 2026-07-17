@@ -1,0 +1,17 @@
+.contact {
+  position: fixed;
+  z-index: 1;
+  bottom: 16px;
+  right: 16px;
+  margin: 0;
+  font-size: 0.7rem;
+  color: var(--faint);
+}
+
+.contact a {
+  color: var(--faint);
+}
+
+.contact a:hover {
+  color: var(--fg);
+}

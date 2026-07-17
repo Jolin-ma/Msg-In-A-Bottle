@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import PhysicsCanvas, { type PhysicsCanvasHandle } from "./PhysicsCanvas";
 import MessageInput from "./MessageInput";
-import RandomLink from "./RandomLink";
+import BottleMessage from "./BottleMessage";
+import BottleReleased from "./BottleReleased";
 import RoomSlugMarker from "./RoomSlugMarker";
+import { DRIFT_DURATION_MS } from "@/lib/driftTiming";
+import styles from "./RoomView.module.css";
 
 export interface RoomMessage {
   id: string;
@@ -17,43 +21,36 @@ interface RoomViewProps {
   initialMessages: RoomMessage[];
   ownerName?: string | null;
   roomPrompt?: string | null;
+  isPublic?: boolean;
 }
-
-const MAX_REPLAY_WINDOW_MS = 8000;
-const MAX_STAGGER_MS = 120;
-const MIN_STAGGER_MS = 15;
 
 export default function RoomView({
   slug,
   initialMessages,
   ownerName = null,
   roomPrompt = null,
+  isPublic = true,
 }: RoomViewProps) {
+  const router = useRouter();
   const canvasRef = useRef<PhysicsCanvasHandle>(null);
+  const [pending, setPending] = useState(false);
+  const [released, setReleased] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasSubmittedOnce, setHasSubmittedOnce] = useState(false);
 
   useEffect(() => {
-    const count = initialMessages.length;
-    if (count === 0) return;
-
-    const stagger = Math.max(
-      MIN_STAGGER_MS,
-      Math.min(MAX_STAGGER_MS, MAX_REPLAY_WINDOW_MS / count),
-    );
-
-    const timeouts = initialMessages.map((message, index) =>
-      setTimeout(() => {
-        canvasRef.current?.spawnText(message.text);
-      }, index * stagger),
-    );
-
-    return () => {
-      timeouts.forEach(clearTimeout);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!released) return;
+    const timeout = window.setTimeout(() => {
+      router.push("/dashboard");
+    }, DRIFT_DURATION_MS);
+    return () => window.clearTimeout(timeout);
+  }, [released, router]);
 
   async function handleSubmit(text: string) {
     canvasRef.current?.spawnText(text);
+    setHasSubmittedOnce(true);
+    setPending(true);
+    setError(null);
 
     try {
       const response = await fetch("/api/messages", {
@@ -61,20 +58,46 @@ export default function RoomView({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ roomSlug: slug, text }),
       });
+
       if (!response.ok) {
-        console.warn("Failed to persist message:", await response.text());
+        setPending(false);
+        setError("Couldn't send that. Try again.");
+        return;
       }
-    } catch (error) {
-      console.warn("Failed to persist message:", error);
+
+      setPending(false);
+      setReleased(true);
+    } catch {
+      setPending(false);
+      setError("Couldn't send that. Try again.");
     }
   }
+
+  const placeholder = hasSubmittedOnce
+    ? "Type something..."
+    : initialMessages.length === 0
+      ? "Be the first to leave a note..."
+      : "Write your reply...";
 
   return (
     <>
       <PhysicsCanvas ref={canvasRef} />
-      <MessageInput onSubmit={handleSubmit} />
-      <RandomLink />
-      <RoomSlugMarker slug={slug} ownerName={ownerName} roomPrompt={roomPrompt} />
+      {released ? (
+        <BottleReleased isPublic={isPublic} />
+      ) : (
+        <>
+          {initialMessages.length > 0 && (
+            <BottleMessage text={initialMessages[0].text} />
+          )}
+          <MessageInput
+            onSubmit={handleSubmit}
+            placeholder={placeholder}
+            disabled={pending}
+          />
+          {error && <p className={styles.error}>{error}</p>}
+        </>
+      )}
+      <RoomSlugMarker ownerName={ownerName} roomPrompt={roomPrompt} />
     </>
   );
 }

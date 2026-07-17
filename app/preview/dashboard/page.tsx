@@ -1,34 +1,32 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { getRoomsByOwner } from "@/lib/rooms";
 import CreateBottleForm from "@/components/CreateBottleForm";
 import SignOutButton from "@/components/SignOutButton";
-import styles from "./page.module.css";
+import styles from "@/app/dashboard/page.module.css";
 
-export const dynamic = "force-dynamic";
+const sampleBottles = [
+  {
+    id: "1",
+    slug: "tidewater-echoes",
+    messages: [{ id: "m1", text: "the light through the kitchen window this morning" }],
+  },
+  {
+    id: "2",
+    slug: "for-mara-only",
+    messages: [],
+  },
+];
 
-export default async function DashboardPage() {
-  const session = await auth();
-  if (!session?.user) {
-    redirect("/");
-  }
-
-  const bottles = await getRoomsByOwner(session.user.id);
-
+export default function PreviewDashboardPage() {
   return (
     <div className={styles.page}>
       <SignOutButton />
       <div className={styles.header}>
-        <span className={styles.email}>{session.user.email}</span>
+        <span className={styles.email}>you@example.com</span>
       </div>
 
       <CreateBottleForm />
 
       <div className={styles.bottles}>
-        {bottles.length === 0 && (
-          <p className={styles.empty}>No bottles yet. Create one above.</p>
-        )}
-        {bottles.map((bottle) => (
+        {sampleBottles.map((bottle) => (
           <section key={bottle.id} className={styles.bottle}>
             <a className={styles.bottleLink} href={`/${bottle.slug}`}>
               /{bottle.slug}

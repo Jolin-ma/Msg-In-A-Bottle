@@ -7,6 +7,7 @@
   align-items: center;
   justify-content: center;
   gap: 24px;
+  padding-top: 10vh;
   pointer-events: none;
 }
 
@@ -60,6 +61,29 @@
   font-size: 0.85rem;
   color: #b3261e;
   text-align: center;
+}
+
+.divider {
+  margin: -12px 0;
+  font-size: 0.75rem;
+  color: var(--faint);
+  pointer-events: none;
+}
+
+.google {
+  border: 1px solid var(--faint);
+  background: transparent;
+  padding: 8px 20px;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--fg);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.google:hover {
+  border-color: var(--muted);
 }
 
 .toggle {

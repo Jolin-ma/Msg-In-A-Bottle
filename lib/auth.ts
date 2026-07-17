@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
@@ -20,7 +21,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) return null;
+        if (!user || !user.passwordHash) return null;
 
         const isValid = await bcrypt.compare(password, user.passwordHash);
         if (!isValid) return null;
@@ -28,5 +29,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return { id: user.id, email: user.email, name: user.name };
       },
     }),
+    Google,
   ],
+  callbacks: {
+    ...authConfig.callbacks,
+    async jwt({ token, user, account }) {
+      if (account?.provider === "google" && user?.email) {
+        const dbUser = await prisma.user.upsert({
+          where: { email: user.email },
+          update: {},
+          create: { email: user.email, name: user.name ?? null },
+        });
+        token.id = dbUser.id;
+        return token;
+      }
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+  },
 });

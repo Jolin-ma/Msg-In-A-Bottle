@@ -19,8 +19,22 @@
   width: 220px;
 }
 
+.promptInput {
+  width: min(80vw, 320px);
+}
+
 .input::placeholder {
   color: var(--muted);
+}
+
+.toggle {
+  border: none;
+  background: transparent;
+  padding: 6px 0;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--muted);
+  cursor: pointer;
 }
 
 .submit {

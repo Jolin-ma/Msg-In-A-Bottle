@@ -1,0 +1,14 @@
+.message {
+  position: fixed;
+  z-index: 1;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(90vw, 640px);
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--fg);
+}

@@ -13,9 +13,11 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const rawSlug: unknown = body?.slug;
   const rawName: unknown = body?.name;
+  const rawIsPublic: unknown = body?.isPublic;
   if (
     typeof rawSlug !== "string" ||
-    (rawName !== undefined && typeof rawName !== "string")
+    (rawName !== undefined && typeof rawName !== "string") ||
+    (rawIsPublic !== undefined && typeof rawIsPublic !== "boolean")
   ) {
     return NextResponse.json({ error: "invalid_slug" }, { status: 400 });
   }
@@ -26,9 +28,10 @@ export async function POST(request: Request) {
   }
 
   const name = typeof rawName === "string" ? rawName.trim().slice(0, 140) : null;
+  const isPublic = typeof rawIsPublic === "boolean" ? rawIsPublic : true;
 
   try {
-    const room = await createOwnedRoom(slug, session.user.id, name);
+    const room = await createOwnedRoom(slug, session.user.id, name, isPublic);
     return NextResponse.json(room, { status: 201 });
   } catch (error) {
     if (

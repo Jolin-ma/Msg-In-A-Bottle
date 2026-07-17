@@ -2,6 +2,7 @@
 
 import Matter from "matter-js";
 import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   createPhysicsWorld,
   destroyPhysicsWorld,
@@ -20,9 +21,11 @@ const MIN_WIDTH = 80;
 const MAX_WIDTH = 150;
 const SPAWN_STAGGER_MS = 180;
 const MAX_DELTA_MS = 33;
+const CLICK_MOVE_THRESHOLD = 6;
 
 export default function BottlePhysics() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -66,6 +69,30 @@ export default function BottlePhysics() {
     };
     window.addEventListener("resize", handleResize);
 
+    // A bottle is a message that's already out there — clicking one (as
+    // opposed to dragging it) takes you to where you can read/reply to it.
+    let downPos: { x: number; y: number } | null = null;
+    const handlePointerDown = (event: MouseEvent) => {
+      downPos = { x: event.clientX, y: event.clientY };
+    };
+    const handlePointerUp = (event: MouseEvent) => {
+      if (!downPos) return;
+      const dx = event.clientX - downPos.x;
+      const dy = event.clientY - downPos.y;
+      downPos = null;
+      if (Math.hypot(dx, dy) > CLICK_MOVE_THRESHOLD) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const point = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      const bodies = Matter.Composite.allBodies(world.engine.world);
+      const hit = Matter.Query.point(bodies, point).some((body) => body.plugin?.image);
+      if (hit) {
+        router.push("/preview");
+      }
+    };
+    canvas.addEventListener("mousedown", handlePointerDown);
+    canvas.addEventListener("mouseup", handlePointerUp);
+
     let rafId: number | null = null;
     let lastTime = performance.now();
     const loop = (time: number) => {
@@ -105,11 +132,13 @@ export default function BottlePhysics() {
       timeouts.forEach(clearTimeout);
       if (rafId !== null) cancelAnimationFrame(rafId);
       window.removeEventListener("resize", handleResize);
+      canvas.removeEventListener("mousedown", handlePointerDown);
+      canvas.removeEventListener("mouseup", handlePointerUp);
       Matter.World.remove(world.engine.world, mouseConstraint);
       Matter.Mouse.clearSourceEvents(mouse);
       destroyPhysicsWorld(world);
     };
-  }, []);
+  }, [router]);
 
   return <canvas ref={canvasRef} className={styles.canvas} />;
 }

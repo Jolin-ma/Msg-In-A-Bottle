@@ -59,7 +59,7 @@ export default function AuthForm() {
         return;
       }
 
-      router.push("/dashboard");
+      router.push("/welcome");
     } catch {
       setError("Something went wrong. Please try again.");
       setPending(false);
@@ -116,6 +116,16 @@ export default function AuthForm() {
           {mode === "signin" ? "Sign in" : "Create a message bottle"}
         </button>
       </form>
+
+      <div className={styles.divider}>or</div>
+
+      <button
+        type="button"
+        className={styles.google}
+        onClick={() => signIn("google", { callbackUrl: "/welcome" })}
+      >
+        Sign in with Google
+      </button>
 
       <button
         type="button"
