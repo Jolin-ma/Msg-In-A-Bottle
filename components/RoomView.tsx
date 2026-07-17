@@ -39,14 +39,14 @@ export default function RoomView({
   const [hasSubmittedOnce, setHasSubmittedOnce] = useState(false);
   const [wentPrivate, setWentPrivate] = useState(false);
 
-  // initialMessages is newest-first; everything but the newest is already
-  // "read" history, so it replays as a pre-fallen letter pile on open —
-  // the newest one is shown as static readable text instead (below).
-  const history = initialMessages.slice(1).reverse();
+  // Readable stack is oldest-to-newest so the conversation reads top to
+  // bottom in order. Every message — including the newest — also replays as
+  // a falling-letter pile on open, so it shows up both as text and sediment.
+  const chronological = [...initialMessages].reverse();
 
   useEffect(() => {
     const HISTORY_SPAWN_STAGGER_MS = 90;
-    const timeouts = history.map((message, index) =>
+    const timeouts = chronological.map((message, index) =>
       window.setTimeout(() => {
         canvasRef.current?.spawnText(message.text);
       }, index * HISTORY_SPAWN_STAGGER_MS),
@@ -101,8 +101,10 @@ export default function RoomView({
     <>
       <PhysicsCanvas ref={canvasRef} />
       {released && <BottleReleased isPublic={isPublic && !wentPrivate} />}
-      {!released && initialMessages.length > 0 && (
-        <BottleMessage text={initialMessages[0].text} />
+      {!released && chronological.length > 0 && (
+        <div className={styles.readingArea}>
+          <BottleMessage messages={chronological} />
+        </div>
       )}
       {/* Stays mounted through the release so the bottle-icon drift
           animation (started on submit) can finish playing instead of

@@ -1,9 +1,17 @@
 import styles from "./BottleMessage.module.css";
 
 interface BottleMessageProps {
-  text: string;
+  messages: { id: string; text: string }[];
 }
 
-export default function BottleMessage({ text }: BottleMessageProps) {
-  return <p className={styles.message}>{text}</p>;
+export default function BottleMessage({ messages }: BottleMessageProps) {
+  return (
+    <div className={styles.stack}>
+      {messages.map((message) => (
+        <p key={message.id} className={styles.message}>
+          {message.text}
+        </p>
+      ))}
+    </div>
+  );
 }
