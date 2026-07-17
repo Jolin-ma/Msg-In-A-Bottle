@@ -139,14 +139,6 @@ export default function AuthForm() {
           ? "New here? Create a message bottle"
           : "Already have an account? Sign in"}
       </button>
-
-      <button
-        type="button"
-        className={styles.demo}
-        onClick={() => router.push("/preview")}
-      >
-        Try the demo — no sign-in
-      </button>
     </div>
   );
 }

@@ -96,16 +96,3 @@
   cursor: pointer;
   pointer-events: auto;
 }
-
-.demo {
-  position: fixed;
-  bottom: 24px;
-  border: none;
-  background: transparent;
-  padding: 0;
-  font: inherit;
-  font-size: 0.7rem;
-  color: var(--faint);
-  cursor: pointer;
-  pointer-events: auto;
-}
