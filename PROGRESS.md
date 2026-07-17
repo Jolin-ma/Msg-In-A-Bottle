@@ -1,6 +1,6 @@
 # Msg In A Bottle — Progress Log
 
-Latest session: 2026-07-17c (previous: 2026-07-17b, 2026-07-17, 2026-07-16)
+Latest session: 2026-07-17d (previous: 2026-07-17c, 2026-07-17b, 2026-07-17, 2026-07-16)
 
 ## What this is
 
@@ -10,7 +10,9 @@ scatter under gravity on an HTML5 canvas (Matter.js). Each unique URL slug is it
 own persistent "bottle." The core loop is **receive → read → reply → release**:
 open a bottle, read the one note currently inside it, write a reply, and release
 it — back to a specific person (private bottles) or into the public pool for a
-stranger to find (public bottles).
+stranger to find (public bottles). A bottle can also be flagged as a **diary**
+at creation — same physics/visuals, but entries just accumulate with no
+seal-and-release step, for writing to yourself instead of someone else.
 
 ## Stack
 
@@ -235,18 +237,145 @@ migration step is needed for first deploy — production will point at the
 same Neon database that dev has already been migrating against directly all
 session.
 
+## What got built 2026-07-17d (live deploy, mobile, feedback/admin, diary, bugfixes)
+
+The app is now **live**: **https://msg-in-a-bottle.vercel.app/**, deployed
+from `Jolin-ma/Msg-In-A-Bottle` main via Vercel's GitHub integration (auto-
+deploys on every push). Production points at the same Neon database dev has
+been using all along — there's only one database, not separate dev/prod.
+Almost everything below was verified against it directly (via `curl`, using
+disposable test accounts cleaned up afterward, same as prior sessions) both
+locally and in production, since most routes don't require auth to view.
+
+### 1. Deployment
+- Vercel project created via GitHub import (had to fix a one-time GitHub App
+  permission gap — Vercel's app wasn't installed on the account yet).
+- Env vars (`DATABASE_URL`, `AUTH_SECRET`, `AUTH_GOOGLE_ID`,
+  `AUTH_GOOGLE_SECRET`) set from the local `.env` values.
+- `AUTH_GOOGLE_ID` had a trailing-space typo in Vercel's dashboard the first
+  time (Google OAuth failed with "OAuth client not found") — caught by
+  inspecting the actual `client_id` in the redirect URL via `curl`, fixed by
+  re-entering the value and redeploying.
+- Google Cloud Console needed the production callback URL added
+  (`https://msg-in-a-bottle.vercel.app/api/auth/callback/google`) alongside
+  the existing `localhost:3000` one.
+- Learned: Vercel deployments occasionally have a brief propagation window
+  right after a push where a route 404s or an old code path still runs —
+  not a real bug, just wait ~30-60s and retry before concluding something's
+  broken.
+
+### 2. Mobile responsiveness
+- **Real bug, not cosmetic**: tapping a decorative bottle on the sign-in page
+  did nothing on actual touchscreens. Matter.js's own `Mouse` calls
+  `preventDefault()` on `touchstart`/`touchend` for the canvas, which
+  suppresses the browser's synthetic `mousedown`/`mouseup` compatibility
+  events — `BottlePhysics.tsx`'s click-vs-drag detection relied on those.
+  Fixed by switching to Pointer Events, which aren't part of that
+  suppression.
+- Several panels used `width: min(NNvw, ...)` while sitting inside a padded
+  fixed-position parent — `vw` always measures the raw viewport regardless
+  of the parent's padding, so on narrow phones these computed wider than the
+  space actually available, clipping content at the edge. Fixed by switching
+  to `min(100%, ...)` everywhere this pattern showed up.
+- `MessageInput` shrinks font/icon under 420px; `ContactInfo`'s email field
+  bumped to 16px (below that triggers iOS Safari's zoom-on-focus); touch
+  targets on the modal close button and dashboard delete "×" enlarged to
+  ~40-44px (were ~24px); `BottleMessage` font-size now `clamp()`'d.
+
+### 3. Feedback pipeline + admin Operations Dashboard
+- `ContactInfo`'s mailto link (leaked the owner's real email in page source)
+  replaced with a centered modal form (`POST /api/feedback`) — optional
+  contact email for a reply, otherwise anonymous. Present on both the
+  sign-in page and `/dashboard`.
+- New `/admin` page, gated to one hardcoded admin email
+  (`lib/admin.ts`). Styled to match the site's own light/serif theme (an
+  earlier dark "control room" version was scrapped after user feedback).
+  Three sorting bays (Incoming / Bugs & Technical / Love & Inspiration),
+  resolve/reopen status, archive/restore drawer, and a live drift-stream
+  canvas at the top that cycles through the Incoming bay with a pause
+  toggle.
+- Schema: `Feedback` model with `status`, `category`, `archivedAt`.
+  `PATCH /api/feedback/[id]` takes any combination of
+  `status`/`category`/`archived` in one call.
+
+### 4. Bottle-creation bugs
+- **Shareable link didn't match the actual bottle.** `CreateBottleForm` built
+  the `/welcome` share link from the raw, unsanitized slug input instead of
+  the sanitized slug the server actually stored the room under (`"Dear Me"`
+  vs. the stored `"dear-me"`). Copying and opening that link silently
+  auto-created a brand-new *empty* room at the wrong slug (room pages
+  upsert-on-visit) instead of opening the real bottle. Fixed by using the
+  server's response slug for the share link instead of the client's raw
+  input.
+- **No way to actually write the bottle's message.** The second field on
+  creation only ever became `Room.name` — a small caption, never an actual
+  message — so a fresh bottle always opened empty, prompting the *recipient*
+  to write the first note (backwards for a bottle meant to deliver something
+  to someone). It's now a real "write your message" textarea whose text
+  becomes the bottle's first message via `Room`'s new optional
+  `initialMessage` in `createOwnedRoom`.
+- Public bottle creation removed entirely from the form — bottles are always
+  private now (`isPublic: false` always sent); the visibility toggle became a
+  purely cosmetic tagline pair instead ("A private harbor — a letter for
+  someone" / "Diary — a secret cast to the sea").
+
+### 5. Digital diary feature
+- New `/diary` route: a private, one-per-account personal journal, separate
+  from the bottle-exchange system (`DiaryEntry` model — deliberately not
+  reusing `Room`/`Message`, since a diary needs none of the public/private,
+  ownership-release, or reply-privacy machinery bottles carry).
+- The bottle-creation "Diary" tagline option was later made to *actually*
+  persist — `Room.isDiary` (real field, not just cosmetic) — so a bottle
+  created that way is dashboard-labeled "diary" and its room page renders
+  via a new `DiaryRoomView` (same physics/letter-pile visuals as `DiaryView`,
+  posting to the existing `/api/messages` instead of `/api/diary`) — entries
+  just accumulate, no seal/redirect after each one.
+- Diary compose box: a `<textarea>` (not `<input>`) so Enter inserts a
+  newline instead of submitting — single-line inputs auto-submit a form on
+  Enter, textareas don't. Has a bobbing bottle icon next to "add entry."
+- **Letter-pile ceiling** (keeps a tall pile from covering the compose box):
+  first attempt added a full-width static physics body as a "ceiling" — this
+  was wrong, it caught every letter immediately on the way down and nothing
+  ever reached the real floor, since it sat directly in the fall path. Fixed
+  by *not* touching the fall path at all: `PhysicsCanvas` now takes an
+  optional `getCeilingY` callback, checked every 250ms, that removes only
+  already-*settled* (near-zero speed) letters found above the line —
+  actively-falling letters are never touched. The line itself is measured
+  live off the compose box's real `getBoundingClientRect()`, not a guessed
+  viewport-height fraction, with a 100px buffer above it.
+- Message stack (`BottleMessage`) changed from showing only the single
+  latest message to showing *all* of a bottle's messages stacked
+  chronologically (oldest → newest), each with a date/time stamp — matters
+  most for diary bottles where you want to read the whole running log.
+  Capped at a max-height with internal scroll (soft-faded edges) so a long
+  history can't grow into the reply/compose box below it, regardless of
+  bottle length.
+- `RoomSlugMarker`'s back-button + owner caption can run tall; the message
+  stack's top offset is now `max(8%, 140px)` instead of a bare percentage,
+  which could shrink below the caption's height on short mobile screens and
+  overlap it.
+- `MAX_LETTER_BODIES` (decorative pile cap, safe to trim — nothing lost) went
+  300 → 150 → 450 over the course of tuning; landed on 450.
+
 ## Blocked / next steps
 
-- **Deploying now**: pushing this session's work to GitHub
-  (`Jolin-ma/Msg-In-A-Bottle`), then the user connects the repo via Vercel's
-  "Import Project" (requires their Vercel account, not doable from here).
-  Still needed after that: set `DATABASE_URL`, `AUTH_SECRET`,
-  `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` as production env vars in the Vercel
-  project (no MCP tool available to set these — must be done in the Vercel
-  dashboard), and add the production callback URL
-  (`https://<domain>/api/auth/callback/google`) to the Google Cloud Console
-  OAuth client's authorized redirect URIs.
-- `PILE_HISTORY_LIMIT` (60) is an unvalidated guess at a reasonable
-  client-side physics ceiling — if a heavily-replied bottle ever feels
-  sluggish on open, that's the first knob to turn (lower the cap, or spawn
-  fewer at once / less staggered).
+- **Resend + custom domain, for replying to feedback from `/admin`**: user is
+  buying a domain via Namecheap (chose that over Vercel's domain registrar)
+  and already has a Resend account but hasn't generated an API key yet.
+  Once both exist: add the domain's DNS records in Namecheap (SPF/DKIM/DMARC
+  from Resend), get the API key, then build a reply-from-the-dashboard
+  feature (`RESEND_API_KEY` env var, a new send endpoint, UI on each
+  feedback card). Not started — this is next up.
+- The domain-purchase Vercel MCP tool (`buy_domain`) errored with
+  `BUY_QUOTE_SIGNING_SECRET is not configured on this server` — purchases
+  aren't available through that connector in this environment; not
+  something fixable from here, hence the move to Namecheap.
+- `PILE_HISTORY_LIMIT` (60, in `lib/rooms.ts`, separate from
+  `MAX_LETTER_BODIES`) is still an unvalidated guess at how many past
+  messages are worth fetching/replaying per room open — same caveat as
+  before, first knob to turn if a heavily-replied bottle ever feels slow.
+- Public bottles (`isPublic: true`) still exist as a concept everywhere else
+  in the app (random-pool discovery, sign-in page decorative links, the
+  reply-time "make private" flip) — only *creating new* public bottles was
+  removed from the form. If the intent is to sunset public bottles
+  entirely, those other paths haven't been touched.
