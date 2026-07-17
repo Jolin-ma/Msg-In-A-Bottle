@@ -79,7 +79,6 @@ export default function CreateBottleForm() {
         >
           public — cast into the sea
         </button>
-        <span className={styles.visibilityDivider}>/</span>
         <button
           type="button"
           role="radio"

@@ -29,17 +29,16 @@
 
 .visibility {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
+  gap: 4px;
 }
 
 .visibilityOption {
   border: none;
   border-bottom: 1px solid transparent;
   background: transparent;
-  padding: 6px 0;
+  padding: 4px 0;
   font: inherit;
   font-size: 0.8rem;
   color: var(--faint);
@@ -57,11 +56,6 @@
 
 .visibilityActive:hover {
   color: var(--fg);
-}
-
-.visibilityDivider {
-  color: var(--faint);
-  font-size: 0.75rem;
 }
 
 .submit {
