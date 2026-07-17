@@ -69,13 +69,27 @@ export default function CreateBottleForm() {
         placeholder="something that made us happy today"
         autoComplete="off"
       />
-      <button
-        type="button"
-        className={styles.toggle}
-        onClick={() => setIsPublic((value) => !value)}
-      >
-        {isPublic ? "public — cast into the sea" : "private — just between us"}
-      </button>
+      <div className={styles.visibility} role="radiogroup" aria-label="Bottle visibility">
+        <button
+          type="button"
+          role="radio"
+          aria-checked={isPublic}
+          className={`${styles.visibilityOption} ${isPublic ? styles.visibilityActive : ""}`}
+          onClick={() => setIsPublic(true)}
+        >
+          public — cast into the sea
+        </button>
+        <span className={styles.visibilityDivider}>/</span>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={!isPublic}
+          className={`${styles.visibilityOption} ${!isPublic ? styles.visibilityActive : ""}`}
+          onClick={() => setIsPublic(false)}
+        >
+          private — just between us
+        </button>
+      </div>
       <button type="submit" className={styles.submit} disabled={pending}>
         + New bottle
       </button>

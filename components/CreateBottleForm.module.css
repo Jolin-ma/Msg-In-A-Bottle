@@ -27,14 +27,41 @@
   color: var(--muted);
 }
 
-.toggle {
+.visibility {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.visibilityOption {
   border: none;
+  border-bottom: 1px solid transparent;
   background: transparent;
   padding: 6px 0;
   font: inherit;
   font-size: 0.8rem;
-  color: var(--muted);
+  color: var(--faint);
   cursor: pointer;
+}
+
+.visibilityOption:hover {
+  color: var(--muted);
+}
+
+.visibilityActive {
+  color: var(--fg);
+  border-bottom-color: var(--fg);
+}
+
+.visibilityActive:hover {
+  color: var(--fg);
+}
+
+.visibilityDivider {
+  color: var(--faint);
+  font-size: 0.75rem;
 }
 
 .submit {
