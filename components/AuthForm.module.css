@@ -48,7 +48,7 @@
   font: inherit;
   font-size: 1.1rem;
   color: var(--fg);
-  cursor: pointer;
+  cursor: default;
 }
 
 .submit:disabled {
@@ -78,7 +78,7 @@
   font: inherit;
   font-size: 0.95rem;
   color: var(--fg);
-  cursor: pointer;
+  cursor: default;
   pointer-events: auto;
 }
 
@@ -93,6 +93,6 @@
   font: inherit;
   font-size: 0.8rem;
   color: var(--faint);
-  cursor: pointer;
+  cursor: default;
   pointer-events: auto;
 }
