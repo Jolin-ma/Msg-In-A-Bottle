@@ -17,6 +17,10 @@ export async function createFeedback(
   });
 }
 
+export async function getUnreadFeedbackCount() {
+  return prisma.feedback.count({ where: { status: "NEW" } });
+}
+
 export async function getAllFeedback() {
   return prisma.feedback.findMany({
     orderBy: { createdAt: "desc" },
