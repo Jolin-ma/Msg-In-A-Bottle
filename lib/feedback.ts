@@ -66,3 +66,7 @@ export async function markFeedbackReplyRead(id: string, userId: string) {
     data: { replyReadAt: new Date() },
   });
 }
+
+export async function deleteFeedback(id: string) {
+  await prisma.feedback.delete({ where: { id } });
+}

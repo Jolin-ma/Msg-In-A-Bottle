@@ -106,6 +106,16 @@ export default function OperationsDashboard({
     patch(id, { archived });
   }
 
+  async function deleteEntry(id: string, preview: string) {
+    const confirmed = window.confirm(
+      `Delete this feedback for good?\n\n"${preview}"\n\nThis can't be undone.`,
+    );
+    if (!confirmed) return;
+
+    setEntries((current) => current.filter((entry) => entry.id !== id));
+    await fetch(`/api/feedback/${id}`, { method: "DELETE" }).catch(() => {});
+  }
+
   async function sendReply(id: string) {
     const reply = (replyDrafts[id] ?? "").trim();
     if (!reply) return;
@@ -230,6 +240,13 @@ export default function OperationsDashboard({
               >
                 archive
               </button>
+              <button
+                type="button"
+                className={styles.actionButtonQuiet}
+                onClick={() => deleteEntry(entry.id, entry.text)}
+              >
+                delete
+              </button>
             </div>
           </div>
         )}
@@ -303,6 +320,13 @@ export default function OperationsDashboard({
                   onClick={() => setArchived(entry.id, false)}
                 >
                   restore
+                </button>
+                <button
+                  type="button"
+                  className={styles.actionButtonQuiet}
+                  onClick={() => deleteEntry(entry.id, entry.text)}
+                >
+                  delete
                 </button>
               </div>
             ))}

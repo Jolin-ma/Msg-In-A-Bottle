@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin";
 import {
+  deleteFeedback,
   markFeedbackReplyRead,
   updateFeedback,
   type FeedbackUpdate,
@@ -65,4 +66,18 @@ export async function PATCH(
 
   const feedback = await updateFeedback(id, update);
   return NextResponse.json(feedback);
+}
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const session = await auth();
+  if (!isAdminEmail(session?.user?.email)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+
+  const { id } = await params;
+  await deleteFeedback(id);
+  return NextResponse.json({ status: "deleted" });
 }
