@@ -9,15 +9,9 @@
 .panelHead {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 8px 14px;
   border-bottom: 1px solid var(--faint);
-}
-
-.panelLabel {
-  font-size: 0.7rem;
-  letter-spacing: 0.03em;
-  color: var(--muted);
 }
 
 .pauseButton {

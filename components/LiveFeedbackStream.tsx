@@ -170,7 +170,6 @@ export default function LiveFeedbackStream({ items }: { items: { id: string }[] 
   return (
     <div className={styles.panel}>
       <div className={styles.panelHead}>
-        <span className={styles.panelLabel}>incoming, drifting in</span>
         <button
           type="button"
           className={styles.pauseButton}
