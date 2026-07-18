@@ -20,6 +20,7 @@ model User {
   createdAt    DateTime      @default(now())
   rooms        Room[]
   diaryEntries DiaryEntry[]
+  feedback     Feedback[]
 }
 
 model Room {
@@ -63,6 +64,11 @@ model Feedback {
   category     FeedbackCategory @default(INCOMING)
   archivedAt   DateTime?
   createdAt    DateTime         @default(now())
+  userId       String?
+  user         User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  adminReply   String?
+  adminReplyAt DateTime?
+  replyReadAt  DateTime?
 }
 
 model DiaryEntry {

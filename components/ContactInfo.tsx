@@ -3,13 +3,60 @@
 import { useEffect, useState, type FormEvent } from "react";
 import styles from "./ContactInfo.module.css";
 
+interface FeedbackThread {
+  id: string;
+  text: string;
+  adminReply: string | null;
+  adminReplyAt: string | null;
+  replyReadAt: string | null;
+  createdAt: string;
+}
+
+function isUnread(entry: FeedbackThread): boolean {
+  return (
+    Boolean(entry.adminReply) &&
+    (!entry.replyReadAt ||
+      (entry.adminReplyAt !== null && entry.replyReadAt < entry.adminReplyAt))
+  );
+}
+
 export default function ContactInfo() {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
-  const [email, setEmail] = useState("");
   const [pending, setPending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [threads, setThreads] = useState<FeedbackThread[]>([]);
+
+  useEffect(() => {
+    fetch("/api/feedback/mine")
+      .then((response) => (response.ok ? response.json() : []))
+      .then((data: FeedbackThread[]) => setThreads(data))
+      .catch(() => {});
+  }, []);
+
+  const hasUnreadReply = threads.some(isUnread);
+  const repliedThreads = threads.filter((entry) => entry.adminReply);
+
+  function handleOpen() {
+    setOpen(true);
+
+    const unread = threads.filter(isUnread);
+    if (unread.length === 0) return;
+
+    setThreads((current) =>
+      current.map((entry) =>
+        isUnread(entry) ? { ...entry, replyReadAt: new Date().toISOString() } : entry,
+      ),
+    );
+    unread.forEach((entry) => {
+      fetch(`/api/feedback/${entry.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ markRead: true }),
+      }).catch(() => {});
+    });
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -23,7 +70,6 @@ export default function ContactInfo() {
   function close() {
     setOpen(false);
     setText("");
-    setEmail("");
     setError(null);
     setSent(false);
   }
@@ -39,7 +85,7 @@ export default function ContactInfo() {
       const response = await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: trimmed, contactEmail: email.trim() || undefined }),
+        body: JSON.stringify({ text: trimmed }),
       });
       if (!response.ok) {
         setError("Couldn't send that. Try again.");
@@ -56,8 +102,9 @@ export default function ContactInfo() {
 
   return (
     <>
-      <button type="button" className={styles.trigger} onClick={() => setOpen(true)}>
+      <button type="button" className={styles.trigger} onClick={handleOpen}>
         Questions or feedback? Get in touch
+        {hasUnreadReply && <span className={styles.unreadDot} aria-label="new reply" />}
       </button>
 
       {open && (
@@ -78,6 +125,17 @@ export default function ContactInfo() {
               ×
             </button>
 
+            {repliedThreads.length > 0 && (
+              <div className={styles.replies}>
+                {repliedThreads.map((thread) => (
+                  <div key={thread.id} className={styles.replyThread}>
+                    <p className={styles.replyQuestion}>You asked: “{thread.text}”</p>
+                    <p className={styles.replyText}>{thread.adminReply}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {sent ? (
               <p className={styles.sent}>Thanks — got it.</p>
             ) : (
@@ -91,14 +149,6 @@ export default function ContactInfo() {
                   rows={4}
                   maxLength={1000}
                   autoFocus
-                />
-                <input
-                  className={styles.email}
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="your email (optional, for a reply)"
-                  autoComplete="email"
                 />
                 {error && <p className={styles.error}>{error}</p>}
                 <button

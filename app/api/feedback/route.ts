@@ -23,7 +23,8 @@ export async function POST(request: Request) {
   const email =
     typeof contactEmail === "string" && contactEmail.trim() ? contactEmail.trim() : null;
 
-  const feedback = await createFeedback(text.trim(), email);
+  const session = await auth();
+  const feedback = await createFeedback(text.trim(), email, session?.user?.id ?? null);
   return NextResponse.json({ id: feedback.id }, { status: 201 });
 }
 

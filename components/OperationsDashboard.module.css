@@ -191,6 +191,51 @@
   color: var(--muted);
 }
 
+.replySent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-left: 2px solid var(--faint);
+}
+
+.replySentLabel {
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.replySentText {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--fg);
+  white-space: pre-wrap;
+}
+
+.replyForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.replyInput {
+  resize: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  border-bottom: 1px solid var(--faint);
+  padding: 6px 0;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--fg);
+  width: 100%;
+}
+
+.replyInput::placeholder {
+  color: var(--muted);
+}
+
 .cardActions {
   display: flex;
   flex-wrap: wrap;

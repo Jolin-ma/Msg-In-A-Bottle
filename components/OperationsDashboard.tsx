@@ -15,6 +15,9 @@ export interface FeedbackEntry {
   category: FeedbackCategory;
   archivedAt: string | null;
   createdAt: string;
+  userId: string | null;
+  userEmail: string | null;
+  adminReply: string | null;
 }
 
 const POLL_INTERVAL_MS = 10000;
@@ -42,6 +45,8 @@ export default function OperationsDashboard({
   const [entries, setEntries] = useState(initialFeedback);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [sendingReplyId, setSendingReplyId] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -101,6 +106,19 @@ export default function OperationsDashboard({
     patch(id, { archived });
   }
 
+  async function sendReply(id: string) {
+    const reply = (replyDrafts[id] ?? "").trim();
+    if (!reply) return;
+    setSendingReplyId(id);
+    try {
+      await patch(id, { reply });
+      applyLocal(id, { adminReply: reply });
+      setReplyDrafts((current) => ({ ...current, [id]: "" }));
+    } finally {
+      setSendingReplyId(null);
+    }
+  }
+
   function handleExpand(entry: FeedbackEntry) {
     const opening = expandedId !== entry.id;
     setExpandedId(opening ? entry.id : null);
@@ -131,8 +149,44 @@ export default function OperationsDashboard({
           <div className={styles.cardBody}>
             <p className={styles.cardText}>{entry.text}</p>
             <span className={styles.cardSource}>
-              {entry.contactEmail ? `reply to: ${entry.contactEmail}` : "anonymous"}
+              {entry.userEmail
+                ? `${entry.userEmail} — reply shows in-app`
+                : entry.contactEmail
+                  ? `reply to: ${entry.contactEmail}`
+                  : "anonymous"}
             </span>
+
+            {entry.adminReply && (
+              <div className={styles.replySent}>
+                <span className={styles.replySentLabel}>your reply</span>
+                <p className={styles.replySentText}>{entry.adminReply}</p>
+              </div>
+            )}
+
+            {entry.userId && (
+              <div className={styles.replyForm}>
+                <textarea
+                  className={styles.replyInput}
+                  value={replyDrafts[entry.id] ?? ""}
+                  onChange={(event) =>
+                    setReplyDrafts((current) => ({ ...current, [entry.id]: event.target.value }))
+                  }
+                  placeholder={entry.adminReply ? "Update your reply..." : "Write a reply..."}
+                  rows={2}
+                  maxLength={1000}
+                />
+                <button
+                  type="button"
+                  className={styles.actionButton}
+                  onClick={() => sendReply(entry.id)}
+                  disabled={
+                    sendingReplyId === entry.id || !(replyDrafts[entry.id] ?? "").trim()
+                  }
+                >
+                  {entry.adminReply ? "update reply" : "send reply"}
+                </button>
+              </div>
+            )}
 
             <div className={styles.cardActions}>
               {BAYS.filter((bay) => bay.key !== entry.category).map((bay) => (

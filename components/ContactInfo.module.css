@@ -5,7 +5,7 @@
   right: 10px;
   border: none;
   background: transparent;
-  padding: 6px;
+  padding: 6px 14px 6px 6px;
   margin: 0;
   font: inherit;
   font-size: 0.7rem;
@@ -15,6 +15,16 @@
 
 .trigger:hover {
   color: var(--fg);
+}
+
+.unreadDot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #c1442c;
 }
 
 .backdrop {
@@ -67,6 +77,34 @@
   color: var(--fg);
 }
 
+.replies {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--faint);
+}
+
+.replyThread {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.replyQuestion {
+  margin: 0;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.replyText {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--fg);
+}
+
 .form {
   display: flex;
   flex-direction: column;
@@ -87,22 +125,6 @@
 }
 
 .textarea::placeholder {
-  color: var(--muted);
-}
-
-.email {
-  border: none;
-  outline: none;
-  background: transparent;
-  border-bottom: 1px solid var(--faint);
-  padding: 6px 0;
-  font: inherit;
-  font-size: 1rem;
-  color: var(--fg);
-  width: 100%;
-}
-
-.email::placeholder {
   color: var(--muted);
 }
 

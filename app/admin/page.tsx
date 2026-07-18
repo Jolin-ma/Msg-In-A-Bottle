@@ -24,6 +24,9 @@ export default async function AdminPage() {
         category: entry.category,
         archivedAt: entry.archivedAt ? entry.archivedAt.toISOString() : null,
         createdAt: entry.createdAt.toISOString(),
+        userId: entry.userId,
+        userEmail: entry.user?.email ?? null,
+        adminReply: entry.adminReply,
       }))}
     />
   );
