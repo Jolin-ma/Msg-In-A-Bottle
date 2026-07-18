@@ -86,25 +86,6 @@ export async function makeRoomPrivate(roomId: string) {
   });
 }
 
-// Random sample of public bottle slugs for the decorative sign-in field —
-// each clickable bottle there should lead somewhere real, not always the
-// same demo page.
-export async function getRandomPublicRoomSlugs(limit: number) {
-  const count = await prisma.room.count({ where: { isPublic: true } });
-  if (count === 0) return [];
-
-  const take = Math.min(limit, count);
-  const maxOffset = Math.max(count - take, 0);
-  const offset = Math.floor(Math.random() * (maxOffset + 1));
-  const rooms = await prisma.room.findMany({
-    where: { isPublic: true },
-    skip: offset,
-    take,
-    select: { slug: true },
-  });
-  return rooms.map((room) => room.slug);
-}
-
 export async function getRandomPublicRoom() {
   const count = await prisma.room.count({ where: { isPublic: true } });
   if (count === 0) return null;

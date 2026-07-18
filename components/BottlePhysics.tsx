@@ -2,7 +2,6 @@
 
 import Matter from "matter-js";
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import {
   createPhysicsWorld,
   destroyPhysicsWorld,
@@ -21,15 +20,9 @@ const MIN_WIDTH = 80;
 const MAX_WIDTH = 150;
 const SPAWN_STAGGER_MS = 180;
 const MAX_DELTA_MS = 33;
-const CLICK_MOVE_THRESHOLD = 6;
 
-interface BottlePhysicsProps {
-  bottleSlugs?: string[];
-}
-
-export default function BottlePhysics({ bottleSlugs = [] }: BottlePhysicsProps) {
+export default function BottlePhysics() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -73,36 +66,6 @@ export default function BottlePhysics({ bottleSlugs = [] }: BottlePhysicsProps) 
     };
     window.addEventListener("resize", handleResize);
 
-    // A bottle is a message that's already out there — clicking one (as
-    // opposed to dragging it) takes you to where you can read/reply to it.
-    // Pointer events (not mousedown/mouseup) — Matter's own Mouse instance
-    // above calls preventDefault() on touchstart/touchend for this same
-    // canvas, which suppresses the browser's synthetic mousedown/mouseup on
-    // real touchscreens. Pointer events aren't part of that suppression, so
-    // this is what makes tapping a bottle actually work on mobile.
-    let downPos: { x: number; y: number } | null = null;
-    const handlePointerDown = (event: PointerEvent) => {
-      downPos = { x: event.clientX, y: event.clientY };
-    };
-    const handlePointerUp = (event: PointerEvent) => {
-      if (!downPos) return;
-      const dx = event.clientX - downPos.x;
-      const dy = event.clientY - downPos.y;
-      downPos = null;
-      if (Math.hypot(dx, dy) > CLICK_MOVE_THRESHOLD) return;
-
-      const rect = canvas.getBoundingClientRect();
-      const point = { x: event.clientX - rect.left, y: event.clientY - rect.top };
-      const bodies = Matter.Composite.allBodies(world.engine.world);
-      const [hit] = Matter.Query.point(bodies, point).filter((body) => body.plugin?.image);
-      if (hit) {
-        const slug = hit.plugin?.slug as string | null | undefined;
-        router.push(slug ? `/${slug}` : "/preview");
-      }
-    };
-    canvas.addEventListener("pointerdown", handlePointerDown);
-    canvas.addEventListener("pointerup", handlePointerUp);
-
     let rafId: number | null = null;
     let lastTime = performance.now();
     const loop = (time: number) => {
@@ -130,10 +93,7 @@ export default function BottlePhysics({ bottleSlugs = [] }: BottlePhysicsProps) 
             const image = images[Math.floor(Math.random() * images.length)];
             const width = MIN_WIDTH + Math.random() * (MAX_WIDTH - MIN_WIDTH);
             const x = rect.width * (0.1 + Math.random() * 0.8);
-            const slug = bottleSlugs.length
-              ? bottleSlugs[i % bottleSlugs.length]
-              : null;
-            spawnBottle(world.engine, image, x, -100, width, slug);
+            spawnBottle(world.engine, image, x, -100, width);
           }, i * SPAWN_STAGGER_MS);
           timeouts.push(timeout);
         }
@@ -145,13 +105,11 @@ export default function BottlePhysics({ bottleSlugs = [] }: BottlePhysicsProps) 
       timeouts.forEach(clearTimeout);
       if (rafId !== null) cancelAnimationFrame(rafId);
       window.removeEventListener("resize", handleResize);
-      canvas.removeEventListener("pointerdown", handlePointerDown);
-      canvas.removeEventListener("pointerup", handlePointerUp);
       Matter.World.remove(world.engine.world, mouseConstraint);
       Matter.Mouse.clearSourceEvents(mouse);
       destroyPhysicsWorld(world);
     };
-  }, [router, bottleSlugs]);
+  }, []);
 
   return <canvas ref={canvasRef} className={styles.canvas} />;
 }
