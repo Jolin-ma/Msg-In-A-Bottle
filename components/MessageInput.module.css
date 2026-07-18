@@ -44,6 +44,8 @@
   border: none;
   outline: none;
   background: transparent;
+  border-bottom: 1px solid var(--faint);
+  padding: 6px 0;
   font: inherit;
   font-size: 24px;
   font-weight: 400;
