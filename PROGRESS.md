@@ -1,6 +1,6 @@
 # Msg In A Bottle — Progress Log
 
-Latest session: 2026-07-17d (previous: 2026-07-17c, 2026-07-17b, 2026-07-17, 2026-07-16)
+Latest session: 2026-07-17e (previous: 2026-07-17d, 2026-07-17c, 2026-07-17b, 2026-07-17, 2026-07-16)
 
 ## What this is
 
@@ -357,25 +357,146 @@ locally and in production, since most routes don't require auth to view.
 - `MAX_LETTER_BODIES` (decorative pile cap, safe to trim — nothing lost) went
   300 → 150 → 450 over the course of tuning; landed on 450.
 
+## What got built 2026-07-17e (decorative bottles cleaned up, in-app feedback replies, admin tooling)
+
+### 1. Decorative sign-in bottles are now purely decorative
+- `BottlePhysics.tsx` no longer takes bottle slugs or navigates anywhere on
+  click — the 7 bottles on the sign-in page only respond to Matter's drag
+  constraint now. Removed the pointer-click hit-test, `router.push`, and
+  `getRandomPublicRoomSlugs` (deleted from `lib/rooms.ts`, was only used
+  here). Cursor over the canvas changed `pointer` → `default`.
+- Also dropped `cursor: pointer` from the three `AuthForm` buttons (Sign in,
+  Sign in with Google, New here...) — a standing preference surfaced this
+  session: this app doesn't use the hand/pointer cursor anywhere, buttons
+  included, favoring the plain arrow throughout.
+- `MessageInput`'s reply box (`Write your reply...`) got the same
+  `border-bottom` underline the diary compose row already had, for visual
+  consistency between the two.
+
+### 2. Feedback replies — admin can now respond, in-app
+First attempt at this misread the ask (built a "reply to a bottle message"
+panel on `/dashboard` instead of "admin replies to feedback") — caught
+before committing, discarded, rebuilt against the right target.
+- Schema: `Feedback` gained `userId` (optional link to the submitting
+  account), `adminReply`, `adminReplyAt`, `replyReadAt`. Migration
+  `20260718023530_add_feedback_reply` applied to the live Neon DB (same DB
+  dev and prod share, as established last session).
+- `lib/feedback.ts`: `createFeedback` now takes a `userId`;
+  `updateFeedback`'s `reply` field sets `adminReply`/`adminReplyAt` and
+  resets `replyReadAt` to null (so re-replying re-flags it unread);
+  `getFeedbackForUser`, `markFeedbackReplyRead`, `getUnreadFeedbackCount`,
+  `deleteFeedback` added.
+- Admin side (`OperationsDashboard.tsx`, `/admin`): each expanded card for
+  feedback tied to an account (or with a manually-entered contact email)
+  gets a reply textarea + send/update button; sent replies show inline.
+  Card source line now shows the submitter's actual account email
+  (`user.email`, joined in `getAllFeedback`) when there is one. Delete
+  button (with confirm) added to both active and archived cards —
+  `DELETE /api/feedback/[id]`, admin-only.
+- User side (`ContactInfo.tsx`, the "Questions or feedback? Get in touch"
+  trigger): fetches `/api/feedback/mine` on mount; shows a small red dot on
+  the trigger when there's an unread admin reply; opening the modal shows
+  the reply thread(s) above the compose form and marks them read
+  (`PATCH /api/feedback/[id]` with `{ markRead: true }`, ownership-checked
+  via `updateMany({ where: { id, userId } })` rather than a separate
+  lookup).
+- `ContactInfo` removed from the sign-in page entirely — it's dashboard/
+  account-only now, since a reply can only ever reach someone with an
+  account. Also dropped the manual "your email (optional, for a reply)"
+  field from the compose form for the same reason: the account's email is
+  already attached server-side, no need to ask for it.
+- New route `app/api/feedback/mine` (GET, empty array if logged out — no
+  401, keeps the client simple). `PATCH /api/feedback/[id]` now branches on
+  `markRead` (any authed user, ownership-checked) vs. the admin-only
+  status/category/archived/reply update it already had.
+- Gap found via real usage: the reply box was initially gated on
+  `entry.userId` only, which hid it for feedback submitted before this
+  feature existed (no linked account, just a legacy contact email). Fixed
+  to show whenever there's *any* way to reach the person
+  (`userId || contactEmail`), with a note that email-only replies aren't
+  delivered in-app and have to be sent manually.
+
+### 3. Admin dashboard layout
+- The "incoming, drifting in" live drift-stream canvas (`LiveFeedbackStream`)
+  went through three passes in one session: height bumped 110px → 170px
+  first (bottles were bobbing low enough to clip against the panel's
+  `overflow: hidden`), then just the label text removed per a follow-up
+  ask, then the whole section removed and the now-unused component deleted
+  outright per a final ask for more room. Net result: gone.
+
+### 4. Local admin tooling (outside the Next.js app, on the user's PC)
+- Desktop shortcut **`Admin Dashboard.lnk`** → `https://msg-in-a-bottle.vercel.app/admin`,
+  with a custom icon rendered from `app/icon.png` (256×256, PNG-in-ICO,
+  hand-built via a `BinaryWriter` script since there's no ImageMagick in
+  this environment) — `C:\Users\jolin\Desktop\bottle-shortcut.ico`.
+  Learned along the way: signing in never returns you to the page you were
+  trying to reach — `AuthForm` hardcodes `callbackUrl: "/welcome"` for both
+  Google and credentials sign-in — so hitting `/admin` while logged out
+  bounces to `/` and, after login, lands on `/welcome`/`/dashboard`, not
+  back at `/admin`. Not a bug in the admin gate itself; just re-click the
+  shortcut once signed in.
+- **Hourly desktop notification for new feedback**:
+  `GET /api/feedback/unread-count` (new) authenticates via either the
+  normal admin session or a shared-secret header (`x-admin-key` matching
+  `ADMIN_API_KEY`), so a background script with no browser session can
+  check it. `C:\Users\jolin\AdminNotifier\check-unread.ps1` polls that
+  endpoint, tracks the last-seen count in a local state file, and pops a
+  Windows balloon notification (using the bottle icon) only when the count
+  has gone *up* since last check — avoids repeat alerts for the same
+  still-unread message. Registered as Windows Task Scheduler task
+  `MsgInABottle-UnreadCheck`, hourly. `ADMIN_API_KEY` lives in the local
+  `.env` (gitignored) and was manually added to Vercel's Production env
+  vars by the user (not settable from here — this Vercel project isn't
+  reachable through the connected Vercel MCP account/team, confirmed via a
+  404 on `get_project`). Confirmed working end-to-end in production: a real
+  feedback submission triggered a real balloon notification on manual task
+  run.
+
+### Verified
+Same no-browser-automation workflow as prior sessions: `tsc`/`eslint`/
+`next build` clean after each change; `curl` end-to-end runs against the
+local dev server with disposable test accounts/data (registered, exercised,
+deleted via `npx prisma db execute` afterward) for anything curl-able
+(session handshake, feedback submit/reply/read/delete, auth boundaries on
+each new route); for admin-only actions that need a real Google OAuth
+session curl can't complete, exercised the same `lib/feedback.ts` functions
+the routes call directly via disposable `npx tsx` scripts (pattern already
+established in `lib/rooms.ts` testing) instead. Two mid-session cache traps
+hit again this session (same class of issue as before): a stale `next
+start` production build serving pre-edit code, and a dev server holding a
+stale generated Prisma Client in memory after a schema-driven
+`prisma generate` — both fixed by restarting the dev server, not by
+changing app code.
+
 ## Blocked / next steps
 
-- **Resend + custom domain, for replying to feedback from `/admin`**: user is
-  buying a domain via Namecheap (chose that over Vercel's domain registrar)
-  and already has a Resend account but hasn't generated an API key yet.
-  Once both exist: add the domain's DNS records in Namecheap (SPF/DKIM/DMARC
-  from Resend), get the API key, then build a reply-from-the-dashboard
-  feature (`RESEND_API_KEY` env var, a new send endpoint, UI on each
-  feedback card). Not started — this is next up.
+- **Resend + custom domain, for emailing feedback replies to people without
+  an account**: still not built. The in-app reply/red-dot flow built this
+  session covers logged-in users, but feedback with only a manually-entered
+  contact email (no account) still has to be replied to by hand — admin UI
+  shows a note to that effect. User is buying a domain via Namecheap (chose
+  that over Vercel's domain registrar) and already has a Resend account but
+  hasn't generated an API key yet. Once both exist: add the domain's DNS
+  records in Namecheap (SPF/DKIM/DMARC from Resend), get the API key, then
+  wire an actual send (`RESEND_API_KEY` env var, a send endpoint, hook it
+  into the existing reply UI for the contact-email-only case).
 - The domain-purchase Vercel MCP tool (`buy_domain`) errored with
   `BUY_QUOTE_SIGNING_SECRET is not configured on this server` — purchases
   aren't available through that connector in this environment; not
   something fixable from here, hence the move to Namecheap.
+- The `msg-in-a-bottle` Vercel project is not reachable through the
+  connected Vercel MCP account/team (`get_project` 404s, doesn't appear in
+  `list_projects` either) — any future Vercel-side config (env vars,
+  redeploys, domain setup) needs the user to do it via the dashboard
+  directly, it can't be automated from here.
 - `PILE_HISTORY_LIMIT` (60, in `lib/rooms.ts`, separate from
   `MAX_LETTER_BODIES`) is still an unvalidated guess at how many past
   messages are worth fetching/replaying per room open — same caveat as
   before, first knob to turn if a heavily-replied bottle ever feels slow.
-- Public bottles (`isPublic: true`) still exist as a concept everywhere else
-  in the app (random-pool discovery, sign-in page decorative links, the
-  reply-time "make private" flip) — only *creating new* public bottles was
-  removed from the form. If the intent is to sunset public bottles
-  entirely, those other paths haven't been touched.
+- Public bottles (`isPublic: true`) still exist as a concept in the rest of
+  the app (random-pool discovery, the reply-time "make private" flip) even
+  though *creating new* public bottles was removed from the form last
+  session and the sign-in page's decorative bottles no longer link anywhere
+  at all (removed this session — they're drag-only now). If the intent is
+  to sunset public bottles entirely, the random-pool/reply-privacy paths
+  haven't been touched.
