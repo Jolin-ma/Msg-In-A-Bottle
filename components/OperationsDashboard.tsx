@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import LiveFeedbackStream from "./LiveFeedbackStream";
 import styles from "./OperationsDashboard.module.css";
 
 type FeedbackStatus = "NEW" | "READ" | "RESOLVED";
@@ -70,11 +69,6 @@ export default function OperationsDashboard({
       resolved: entries.filter((e) => e.status === "RESOLVED").length,
     }),
     [entries],
-  );
-
-  const incoming = useMemo(
-    () => active.filter((e) => e.category === "INCOMING"),
-    [active],
   );
 
   async function patch(id: string, body: Record<string, unknown>) {
@@ -277,8 +271,6 @@ export default function OperationsDashboard({
           <span className={styles.gaugeLabel}>resolved</span>
         </div>
       </section>
-
-      <LiveFeedbackStream items={incoming.map((e) => ({ id: e.id }))} />
 
       <section className={styles.bays}>
         {BAYS.map((bay) => {
