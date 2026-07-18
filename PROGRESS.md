@@ -1,6 +1,6 @@
 # Msg In A Bottle — Progress Log
 
-Latest session: 2026-07-17e (previous: 2026-07-17d, 2026-07-17c, 2026-07-17b, 2026-07-17, 2026-07-16)
+Latest session: 2026-07-18 (previous: 2026-07-17e, 2026-07-17d, 2026-07-17c, 2026-07-17b, 2026-07-17, 2026-07-16)
 
 ## What this is
 
@@ -468,22 +468,58 @@ stale generated Prisma Client in memory after a schema-driven
 `prisma generate` — both fixed by restarting the dev server, not by
 changing app code.
 
+## What got built 2026-07-18 (public bottles sunset)
+
+Decided against building the Resend/custom-domain email path from the prior
+session's blocked list — admin replies stay in-app only, for account users;
+the domain is set in Vercel but Resend integration is intentionally not
+happening. Instead, fully removed the public-bottle concept that had been
+dead/half-wired since 2026-07-17e (creation already only produced private
+bottles; the sign-in page's decorative bottles no longer linked anywhere):
+
+- `Room.isPublic` dropped from the schema entirely — migration
+  `20260718233132_remove_room_is_public` applied directly to the shared
+  Neon DB (6 existing non-null rows lost their value on this column, all
+  other data untouched; confirmed via the same disposable-test-data curl
+  workflow as prior sessions, cleaned up after).
+- `lib/rooms.ts`: removed `makeRoomPrivate` and `getRandomPublicRoom`;
+  `createOwnedRoom` dropped its `isPublic` parameter entirely (now just
+  `slug, ownerId, initialMessage?, isDiary?`).
+- Deleted `lib/randomBottle.ts` and `app/api/rooms/random/route.ts` (its own
+  route) — hitting `/api/rooms/random` now just falls through to the
+  dynamic `[slug]` route with slug `"random"`, same as any other unknown
+  slug; confirmed via curl.
+- `components/BottleReleased.tsx`: dropped the `isPublic` prop and the
+  "[find another bottle]" link — always just shows "Delivered."
+- `components/MessageInput.tsx`: removed the reply-time "keep this just
+  between us instead of public?" toggle and its `isPublicBottle`/
+  `makePrivate` state; `onSubmit` is back to a single-arg `(text)` callback.
+- `components/RoomView.tsx`, `app/[slug]/page.tsx`, `app/api/messages/route.ts`,
+  `app/api/bottles/route.ts`, `components/CreateBottleForm.tsx`: all
+  `isPublic`/`makePrivate` plumbing removed end to end.
+- `components/WelcomePanel.tsx` / `app/welcome/page.tsx` /
+  `app/preview/welcome/page.tsx`: dropped the `isPublic` prop and the public-
+  vs-private copy branch — always shows the "sealed just for whoever has
+  this link" copy, since that's the only kind of bottle that exists now.
+- Dashboard bottle-card meta line simplified from
+  `isDiary ? "diary" : isPublic ? "public" : "private"` to
+  `isDiary ? "diary" : "private"`.
+- Verified: `tsc --noEmit`, `eslint`, `next build` all clean (had to clear a
+  stale `.next` cache once — its generated route-type validator still
+  referenced the deleted `/api/rooms/random/route.ts` after the file was
+  removed); `next build`'s route list confirms `/api/rooms/random` is gone.
+  curl end-to-end against the dev server: posting `makePrivate` to
+  `/api/messages` is now silently ignored (no error, no effect), bottle
+  creation no longer sends `isPublic`, `/preview`, `/preview/welcome`,
+  `/preview/dashboard` all still 200. Disposable test rooms/messages
+  cleaned up via `npx prisma db execute` afterward.
+
 ## Blocked / next steps
 
-- **Resend + custom domain, for emailing feedback replies to people without
-  an account**: still not built. The in-app reply/red-dot flow built this
-  session covers logged-in users, but feedback with only a manually-entered
-  contact email (no account) still has to be replied to by hand — admin UI
-  shows a note to that effect. User is buying a domain via Namecheap (chose
-  that over Vercel's domain registrar) and already has a Resend account but
-  hasn't generated an API key yet. Once both exist: add the domain's DNS
-  records in Namecheap (SPF/DKIM/DMARC from Resend), get the API key, then
-  wire an actual send (`RESEND_API_KEY` env var, a send endpoint, hook it
-  into the existing reply UI for the contact-email-only case).
-- The domain-purchase Vercel MCP tool (`buy_domain`) errored with
-  `BUY_QUOTE_SIGNING_SECRET is not configured on this server` — purchases
-  aren't available through that connector in this environment; not
-  something fixable from here, hence the move to Namecheap.
+- Resend/custom-domain email for feedback replies to non-account users is a
+  deliberate non-goal for now (decided 2026-07-18) — admin replies stay
+  in-app only, for people with an account. Revisit only if that constraint
+  changes.
 - The `msg-in-a-bottle` Vercel project is not reachable through the
   connected Vercel MCP account/team (`get_project` 404s, doesn't appear in
   `list_projects` either) — any future Vercel-side config (env vars,
@@ -493,10 +529,3 @@ changing app code.
   `MAX_LETTER_BODIES`) is still an unvalidated guess at how many past
   messages are worth fetching/replaying per room open — same caveat as
   before, first knob to turn if a heavily-replied bottle ever feels slow.
-- Public bottles (`isPublic: true`) still exist as a concept in the rest of
-  the app (random-pool discovery, the reply-time "make private" flip) even
-  though *creating new* public bottles was removed from the form last
-  session and the sign-in page's decorative bottles no longer link anywhere
-  at all (removed this session — they're drag-only now). If the intent is
-  to sunset public bottles entirely, the random-pool/reply-privacy paths
-  haven't been touched.

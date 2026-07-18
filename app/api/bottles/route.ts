@@ -15,14 +15,12 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const rawSlug: unknown = body?.slug;
   const rawMessage: unknown = body?.message;
-  const rawIsPublic: unknown = body?.isPublic;
   const rawIsDiary: unknown = body?.isDiary;
   if (
     typeof rawSlug !== "string" ||
     (rawMessage !== undefined &&
       rawMessage !== null &&
       (typeof rawMessage !== "string" || rawMessage.length > MAX_MESSAGE_LENGTH)) ||
-    (rawIsPublic !== undefined && typeof rawIsPublic !== "boolean") ||
     (rawIsDiary !== undefined && typeof rawIsDiary !== "boolean")
   ) {
     return NextResponse.json({ error: "invalid_slug" }, { status: 400 });
@@ -34,11 +32,10 @@ export async function POST(request: Request) {
   }
 
   const message = typeof rawMessage === "string" ? rawMessage.trim() : null;
-  const isPublic = typeof rawIsPublic === "boolean" ? rawIsPublic : true;
   const isDiary = typeof rawIsDiary === "boolean" ? rawIsDiary : false;
 
   try {
-    const room = await createOwnedRoom(slug, session.user.id, isPublic, message, isDiary);
+    const room = await createOwnedRoom(slug, session.user.id, message, isDiary);
     return NextResponse.json(room, { status: 201 });
   } catch (error) {
     if (

@@ -29,7 +29,6 @@ model Room {
   name       String?
   createdAt  DateTime  @default(now())
   messages   Message[]
-  isPublic   Boolean   @default(true)
   isDiary    Boolean   @default(false)
   ownerId    String?
   owner      User?     @relation(fields: [ownerId], references: [id], onDelete: SetNull)

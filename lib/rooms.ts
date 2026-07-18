@@ -9,7 +9,7 @@ export async function getOrCreateRoom(slug: string) {
   return prisma.room.upsert({
     where: { slug },
     update: {},
-    create: { slug, isPublic: true },
+    create: { slug },
     include: {
       messages: { orderBy: { createdAt: "desc" }, take: PILE_HISTORY_LIMIT },
       owner: { select: { name: true, email: true } },
@@ -20,12 +20,11 @@ export async function getOrCreateRoom(slug: string) {
 export async function createOwnedRoom(
   slug: string,
   ownerId: string,
-  isPublic = true,
   initialMessage?: string | null,
   isDiary = false,
 ) {
   const room = await prisma.room.create({
-    data: { slug, ownerId, isPublic, isDiary },
+    data: { slug, ownerId, isDiary },
   });
 
   if (initialMessage) {
@@ -75,27 +74,4 @@ export async function releaseRoomOwnership(roomId: string) {
     where: { id: roomId },
     data: { ownerId: null },
   });
-}
-
-// A replier can pull a public bottle they found into a private, just-the-two
-// -of-us exchange going forward — it stops surfacing via the random pool.
-export async function makeRoomPrivate(roomId: string) {
-  await prisma.room.update({
-    where: { id: roomId },
-    data: { isPublic: false },
-  });
-}
-
-export async function getRandomPublicRoom() {
-  const count = await prisma.room.count({ where: { isPublic: true } });
-  if (count === 0) return null;
-
-  const offset = Math.floor(Math.random() * count);
-  const [room] = await prisma.room.findMany({
-    where: { isPublic: true },
-    skip: offset,
-    take: 1,
-    select: { slug: true },
-  });
-  return room ?? null;
 }

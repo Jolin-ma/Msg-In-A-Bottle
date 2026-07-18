@@ -19,25 +19,6 @@
   gap: 12px;
 }
 
-.privacyToggle {
-  border: none;
-  background: transparent;
-  padding: 0;
-  font: inherit;
-  font-size: 0.75rem;
-  color: var(--faint);
-  cursor: pointer;
-  text-align: center;
-}
-
-.privacyToggle:hover:not(:disabled) {
-  color: var(--muted);
-}
-
-.privacyToggle:disabled {
-  cursor: default;
-}
-
 .input {
   flex: 1;
   min-width: 0;

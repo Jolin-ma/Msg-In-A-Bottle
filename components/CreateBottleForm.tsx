@@ -27,7 +27,6 @@ export default function CreateBottleForm() {
         body: JSON.stringify({
           slug: trimmed,
           message: message.trim(),
-          isPublic: false,
           isDiary,
         }),
       });
@@ -49,7 +48,7 @@ export default function CreateBottleForm() {
       setMessage("");
       setIsDiary(false);
       setPending(false);
-      router.push(`/welcome?bottle=${encodeURIComponent(room.slug)}&public=false`);
+      router.push(`/welcome?bottle=${encodeURIComponent(room.slug)}`);
     } catch {
       setError("Something went wrong. Please try again.");
       setPending(false);

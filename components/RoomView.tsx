@@ -21,7 +21,6 @@ interface RoomViewProps {
   initialMessages: RoomMessage[];
   ownerName?: string | null;
   roomPrompt?: string | null;
-  isPublic?: boolean;
 }
 
 export default function RoomView({
@@ -29,7 +28,6 @@ export default function RoomView({
   initialMessages,
   ownerName = null,
   roomPrompt = null,
-  isPublic = true,
 }: RoomViewProps) {
   const router = useRouter();
   const canvasRef = useRef<PhysicsCanvasHandle>(null);
@@ -37,7 +35,6 @@ export default function RoomView({
   const [released, setReleased] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSubmittedOnce, setHasSubmittedOnce] = useState(false);
-  const [wentPrivate, setWentPrivate] = useState(false);
 
   // Readable stack is oldest-to-newest so the conversation reads top to
   // bottom in order. Every message — including the newest — also replays as
@@ -63,7 +60,7 @@ export default function RoomView({
     return () => window.clearTimeout(timeout);
   }, [released, router]);
 
-  async function handleSubmit(text: string, makePrivate: boolean) {
+  async function handleSubmit(text: string) {
     canvasRef.current?.spawnText(text);
     setHasSubmittedOnce(true);
     setPending(true);
@@ -73,7 +70,7 @@ export default function RoomView({
       const response = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomSlug: slug, text, makePrivate }),
+        body: JSON.stringify({ roomSlug: slug, text }),
       });
 
       if (!response.ok) {
@@ -83,7 +80,6 @@ export default function RoomView({
       }
 
       setPending(false);
-      if (makePrivate) setWentPrivate(true);
       setReleased(true);
     } catch {
       setPending(false);
@@ -100,7 +96,7 @@ export default function RoomView({
   return (
     <>
       <PhysicsCanvas ref={canvasRef} />
-      {released && <BottleReleased isPublic={isPublic && !wentPrivate} />}
+      {released && <BottleReleased />}
       {!released && chronological.length > 0 && (
         <div className={styles.readingArea}>
           <BottleMessage messages={chronological} />
@@ -114,7 +110,6 @@ export default function RoomView({
         placeholder={placeholder}
         disabled={pending || released}
         hideControls={released}
-        isPublicBottle={isPublic}
       />
       {error && <p className={styles.error}>{error}</p>}
       <RoomSlugMarker ownerName={ownerName} roomPrompt={roomPrompt} />

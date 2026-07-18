@@ -7,10 +7,9 @@ import styles from "./WelcomePanel.module.css";
 interface WelcomePanelProps {
   name: string | null;
   slug: string | null;
-  isPublic: boolean;
 }
 
-export default function WelcomePanel({ name, slug, isPublic }: WelcomePanelProps) {
+export default function WelcomePanel({ name, slug }: WelcomePanelProps) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -31,9 +30,7 @@ export default function WelcomePanel({ name, slug, isPublic }: WelcomePanelProps
         <>
           <p className={styles.heading}>Your bottle is ready.</p>
           <p className={styles.body}>
-            {isPublic
-              ? "It's cast into the sea — a stranger might find it, or share the link with someone in particular."
-              : "It's sealed just for whoever has this link. Send it to a friend."}
+            It&apos;s sealed just for whoever has this link. Send it to a friend.
           </p>
           <div className={styles.linkRow}>
             <span className={styles.link}>/{slug}</span>

@@ -5,11 +5,10 @@ import { DRIFT_DURATION_MS } from "@/lib/driftTiming";
 import styles from "./MessageInput.module.css";
 
 interface MessageInputProps {
-  onSubmit: (text: string, makePrivate: boolean) => void;
+  onSubmit: (text: string) => void;
   placeholder?: string;
   disabled?: boolean;
   hideControls?: boolean;
-  isPublicBottle?: boolean;
 }
 
 function randomBetween(min: number, max: number) {
@@ -48,17 +47,15 @@ export default function MessageInput({
   placeholder = "Type something...",
   disabled = false,
   hideControls = false,
-  isPublicBottle = false,
 }: MessageInputProps) {
   const [value, setValue] = useState("");
-  const [makePrivate, setMakePrivate] = useState(false);
   const [floating, setFloating] = useState(false);
   const [driftStyle, setDriftStyle] = useState<CSSProperties>({});
 
   function submit() {
     const trimmed = value.trim();
     if (!trimmed || disabled) return;
-    onSubmit(trimmed, makePrivate);
+    onSubmit(trimmed);
     setValue("");
     setDriftStyle(randomDriftStyle());
     setFloating(true);
@@ -104,19 +101,6 @@ export default function MessageInput({
           />
         </div>
       </div>
-
-      {isPublicBottle && !hideControls && (
-        <button
-          type="button"
-          className={styles.privacyToggle}
-          onClick={() => setMakePrivate((current) => !current)}
-          disabled={disabled}
-        >
-          {makePrivate
-            ? "✓ this will become just between us"
-            : "keep this just between us instead of public?"}
-        </button>
-      )}
     </div>
   );
 }

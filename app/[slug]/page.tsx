@@ -42,7 +42,6 @@ export default async function RoomPage({ params }: RoomPageProps) {
       slug={room.slug}
       ownerName={room.owner?.name ?? room.owner?.email ?? null}
       roomPrompt={room.name}
-      isPublic={room.isPublic}
       initialMessages={messages}
     />
   );

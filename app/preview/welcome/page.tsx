@@ -10,10 +10,6 @@ export default async function PreviewWelcomePage({
   const { bottle, name } = await searchParams;
 
   return (
-    <WelcomePanel
-      name={name ?? "Alex"}
-      slug={bottle ?? "tidewater-echoes"}
-      isPublic
-    />
+    <WelcomePanel name={name ?? "Alex"} slug={bottle ?? "tidewater-echoes"} />
   );
 }
