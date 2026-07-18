@@ -514,6 +514,38 @@ bottles; the sign-in page's decorative bottles no longer linked anywhere):
   `/preview/dashboard` all still 200. Disposable test rooms/messages
   cleaned up via `npx prisma db execute` afterward.
 
+### Custom domain + a real production incident
+- `msg-in-a-bottle.com` was bought directly through Vercel (not
+  Namecheap as the prior session assumed) and was already fully wired —
+  both `msg-in-a-bottle.com` (308 → `www`) and `www.msg-in-a-bottle.com`
+  showed "Valid Configuration" in Vercel's dashboard on first check, no
+  DNS work needed. Confirmed live via curl.
+- Learned the `msg-in-a-bottle` Vercel project *is* reachable through the
+  connected MCP account after all — `list_projects` on team
+  `team_r3npDTM0Jz3NaEbHJAIWrfwF` (`legacylinkstudio`) doesn't surface it,
+  but `get_deployment`/`get_runtime_errors`/etc. resolve fine once you
+  already have its project ID (`prj_Q41cjkaHq4PLAWdsUpNzLk09Uwiz`) or hit
+  it by deployment URL directly. Corrects the "not reachable at all" note
+  from the prior session — worth trying direct-by-ID/URL calls before
+  concluding a project is out of reach just because it's missing from a
+  list call.
+- **Incident**: committing the schema migration above (dropping
+  `isPublic` from the live Neon DB) without also committing/pushing the
+  matching code change broke production for ~10 minutes (2026-07-18
+  23:40–23:50 UTC, 9 users affected) — every `/dashboard` and bottle-page
+  visit threw `PrismaClientKnownRequestError P2022` (`column "isPublic"
+  does not exist`) because the still-deployed old code's
+  `getOrCreateRoom` upsert still wrote `isPublic: true`. Caught via
+  `get_runtime_errors` after the user reported `/dashboard` "not
+  loading." Fixed by committing and pushing the already-written code
+  changes (commit `7a26494`); Vercel auto-deployed and the error stopped
+  immediately, confirmed via `get_runtime_errors` showing zero new
+  occurrences against the new deployment ID.
+  **Rule going forward: never run a schema migration against the shared
+  Neon DB in isolation — commit and push the matching code in the same
+  breath, since Vercel's auto-deploy is the only thing keeping deployed
+  code in sync with a database both dev and prod share live.**
+
 ## Blocked / next steps
 
 - Resend/custom-domain email for feedback replies to non-account users is a
