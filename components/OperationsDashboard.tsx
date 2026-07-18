@@ -163,7 +163,7 @@ export default function OperationsDashboard({
               </div>
             )}
 
-            {entry.userId && (
+            {(entry.userId || entry.contactEmail) && (
               <div className={styles.replyForm}>
                 <textarea
                   className={styles.replyInput}
@@ -175,16 +175,23 @@ export default function OperationsDashboard({
                   rows={2}
                   maxLength={1000}
                 />
-                <button
-                  type="button"
-                  className={styles.actionButton}
-                  onClick={() => sendReply(entry.id)}
-                  disabled={
-                    sendingReplyId === entry.id || !(replyDrafts[entry.id] ?? "").trim()
-                  }
-                >
-                  {entry.adminReply ? "update reply" : "send reply"}
-                </button>
+                <div className={styles.replyFormRow}>
+                  <button
+                    type="button"
+                    className={styles.actionButton}
+                    onClick={() => sendReply(entry.id)}
+                    disabled={
+                      sendingReplyId === entry.id || !(replyDrafts[entry.id] ?? "").trim()
+                    }
+                  >
+                    {entry.adminReply ? "update reply" : "send reply"}
+                  </button>
+                  {!entry.userId && (
+                    <span className={styles.replyFormHint}>
+                      no account — saved here, send it via email yourself
+                    </span>
+                  )}
+                </div>
               </div>
             )}
 

@@ -219,6 +219,17 @@
   gap: 8px;
 }
 
+.replyFormRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.replyFormHint {
+  font-size: 0.7rem;
+  color: var(--faint);
+}
+
 .replyInput {
   resize: none;
   border: none;
