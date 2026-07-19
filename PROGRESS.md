@@ -617,6 +617,38 @@ bottles; the sign-in page's decorative bottles no longer linked anywhere):
   as a precaution (matches the recurring stale-cache gotcha from prior
   sessions) before confirming the real cause.
 
+### Bottle names now reusable after "deleting" a replied-to bottle
+Root cause, confirmed with a real curl repro before touching code: once a
+bottle has any reply, "delete" only releases ownership (`ownerId: null`) —
+by design, so the link stays live for whoever holds it — but the `Room.slug`
+column is globally unique, so that slug was locked forever even though the
+bottle no longer showed on the original owner's dashboard. Since
+`CreateBottleForm`'s name field was being sent straight through as the raw
+slug, this meant a name could never be reused after its first bottle got a
+reply. An empty (never-replied) bottle's delete already hard-deletes and
+frees the slug fine — only the replied-to case was affected.
+- Fix: decoupled the two. `Room.name` (already in the schema, previously
+  never populated) now stores exactly what the user types — freely
+  reusable, no uniqueness constraint. `lib/rooms.ts#generateUniqueSlug`
+  derives the actual URL slug from `sanitizeSlug(name)`, suffixing
+  `-2`, `-3`, ... only on a collision. `createOwnedRoom` takes `name`
+  instead of `slug` now; `POST /api/bottles` validates and forwards it;
+  the `slug_taken` 409 path is gone since collisions auto-resolve instead
+  of erroring.
+- No schema migration needed — `name` already existed as a column, just
+  unused until now. Old rooms created before this change simply keep
+  `name: null`, and the dashboard's existing `bottle.name || bottle.slug`
+  fallback already handles that gracefully.
+- Verified end-to-end against the dev server: created a bottle, replied to
+  it (making it a two-way exchange), deleted it (confirmed `"released"`
+  not `"deleted"`), then successfully created a second bottle with the
+  *identical* typed name — got back `slug: "our-name-2"` while
+  `name: "our-name"` on both; dashboard HTML confirmed it displays
+  "our-name" for the new one, link is the disambiguated slug underneath.
+  `tsc`/`eslint`/`next build` clean, no runtime errors on the fresh
+  deployment (checked via `get_runtime_errors`), disposable test data
+  cleaned up after.
+
 ## Blocked / next steps
 
 - Resend/custom-domain email for feedback replies to non-account users is a
