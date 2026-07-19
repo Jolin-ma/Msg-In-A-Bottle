@@ -30,6 +30,7 @@
 .gauges {
   width: min(100%, 900px);
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: clamp(16px, 8vw, 40px);
 }

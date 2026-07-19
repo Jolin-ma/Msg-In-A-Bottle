@@ -38,8 +38,10 @@ function formatTimestamp(iso: string): string {
 
 export default function OperationsDashboard({
   initialFeedback,
+  userCount,
 }: {
   initialFeedback: FeedbackEntry[];
+  userCount: number;
 }) {
   const [entries, setEntries] = useState(initialFeedback);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -256,6 +258,10 @@ export default function OperationsDashboard({
       </header>
 
       <section className={styles.gauges}>
+        <div className={styles.gauge}>
+          <span className={styles.gaugeValue}>{userCount}</span>
+          <span className={styles.gaugeLabel}>users</span>
+        </div>
         <div className={styles.gauge}>
           <span className={styles.gaugeValue}>{counts.total}</span>
           <span className={styles.gaugeLabel}>received</span>
