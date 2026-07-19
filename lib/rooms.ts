@@ -1,9 +1,27 @@
 import { prisma } from "@/lib/prisma";
+import { sanitizeSlug } from "@/lib/slug";
 
 // How many past replies replay as an already-settled letter pile when a
 // bottle is opened. The single most recent one is still the only one shown
 // as readable text; the rest are physics history bounded for client perf.
 const PILE_HISTORY_LIMIT = 60;
+
+// Room.slug must stay globally unique forever, even after its owner "deletes"
+// it, because a replied-to bottle keeps its link alive for whoever holds it
+// (see releaseRoomOwnership). So a bottle's display name can't just be its
+// slug — this derives a free slug from the name, suffixing only on collision,
+// so the name itself stays reusable across however many bottles someone
+// creates and lets go of.
+async function generateUniqueSlug(base: string): Promise<string> {
+  const root = base || "bottle";
+  let candidate = root;
+  let suffix = 2;
+  while (await prisma.room.findUnique({ where: { slug: candidate }, select: { id: true } })) {
+    candidate = `${root}-${suffix}`;
+    suffix += 1;
+  }
+  return candidate;
+}
 
 export async function getOrCreateRoom(slug: string) {
   return prisma.room.upsert({
@@ -18,14 +36,15 @@ export async function getOrCreateRoom(slug: string) {
 }
 
 export async function createOwnedRoom(
-  slug: string,
+  name: string,
   ownerId: string,
   initialMessage?: string | null,
   isDiary = false,
   iconIndex = 0,
 ) {
+  const slug = await generateUniqueSlug(sanitizeSlug(name));
   const room = await prisma.room.create({
-    data: { slug, ownerId, isDiary, iconIndex },
+    data: { slug, name, ownerId, isDiary, iconIndex },
   });
 
   if (initialMessage) {

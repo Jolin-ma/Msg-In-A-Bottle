@@ -7,7 +7,7 @@ import styles from "./CreateBottleForm.module.css";
 
 export default function CreateBottleForm() {
   const router = useRouter();
-  const [slug, setSlug] = useState("");
+  const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const [isDiary, setIsDiary] = useState(false);
   const [pickingIcon, setPickingIcon] = useState(false);
@@ -26,7 +26,7 @@ export default function CreateBottleForm() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!slug.trim()) {
+    if (!name.trim()) {
       setError("Name your bottle first.");
       return;
     }
@@ -42,7 +42,7 @@ export default function CreateBottleForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          slug: slug.trim(),
+          slug: name.trim(),
           message: message.trim(),
           isDiary,
           iconIndex,
@@ -50,19 +50,14 @@ export default function CreateBottleForm() {
       });
 
       if (!response.ok) {
-        const data = await response.json().catch(() => null);
-        setError(
-          data?.error === "slug_taken"
-            ? "That name is already taken."
-            : "Couldn't create that bottle.",
-        );
+        setError("Couldn't create that bottle.");
         setPending(false);
         return;
       }
 
       const room = await response.json();
 
-      setSlug("");
+      setName("");
       setMessage("");
       setIsDiary(false);
       setPending(false);
@@ -78,11 +73,12 @@ export default function CreateBottleForm() {
       <form className={styles.form} onSubmit={handleSubmit}>
         <input
           className={styles.input}
-          value={slug}
-          onChange={(event) => setSlug(event.target.value)}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
           placeholder="name-your-bottle"
           autoComplete="off"
           spellCheck={false}
+          maxLength={100}
         />
         <textarea
           className={styles.message}
