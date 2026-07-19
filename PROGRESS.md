@@ -659,3 +659,35 @@ frees the slug fine — only the replied-to case was affected.
   `MAX_LETTER_BODIES`) is still an unvalidated guess at how many past
   messages are worth fetching/replaying per room open — same caveat as
   before, first knob to turn if a heavily-replied bottle ever feels slow.
+
+## What got built 2026-07-19 (readability pass + a real recover-the-link bug)
+
+User-reported: missing "copy link" on `/welcome` right after creating a
+"letter for someone" bottle left no way back to it, and message text felt
+faded/hard to read.
+
+- **Real bug, not cosmetic**: a private bottle's shareable link was only
+  ever surfaced once, on `/welcome` immediately after creation. New
+  `components/CopyBottleLinkButton.tsx` adds a persistent "copy link"
+  button to each private bottle's dashboard card (next to the existing "×"
+  remove button) — hidden for diary bottles, which were never meant to be
+  shareable. Verified via curl: exactly one "copy link" renders per private
+  bottle, zero for a diary one.
+- `BottleMessage.module.css`'s `.message` (the actual reply/diary-entry
+  text) sat at `opacity: 0.55` with a `clamp(16px, 4.5vw, 20px)` range —
+  genuinely hard to read, not just stylistically soft. Bumped to `0.85`
+  opacity and `clamp(18px, 5vw, 23px)`; the timestamp below it moved out of
+  `--faint` into `--muted` and grew from `0.68rem` to `0.75rem`.
+- Swept the same low-contrast-`--faint`-plus-tiny-font pattern everywhere
+  else it showed up, since it was clearly a recurring theme rather than one
+  component: the create-bottle framing toggle ("a private harbor — a
+  letter for someone" / diary, named directly in the user's report), the
+  `/welcome` page's heading/body/link/copy-button text, the `[privacy]` and
+  "Questions or feedback? Get in touch" corner triggers (both were
+  `0.7rem`/`--faint`, now `1rem`/`--muted` with more padding for a bigger
+  touch target), and the sign-in page's "New here? Create a message
+  bottle" toggle.
+- No schema changes, so no deploy-ordering risk this time. Verified via
+  `tsc`/`eslint`/`next build` clean, visual check in the user's browser
+  before shipping, and `get_runtime_errors` showing nothing new on the
+  fresh production deployment.
