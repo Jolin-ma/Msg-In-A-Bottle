@@ -691,3 +691,57 @@ faded/hard to read.
   `tsc`/`eslint`/`next build` clean, visual check in the user's browser
   before shipping, and `get_runtime_errors` showing nothing new on the
   fresh production deployment.
+
+### Admin: total user count
+Added a "users" stat tile to `/admin`'s existing feedback gauges row
+(first tile, before received/unread/resolved), backed by a plain
+`prisma.user.count()` in new `lib/users.ts`. Verified the count function
+directly against the live DB via a disposable script (matched a raw
+`prisma.user.count()` exactly) since `/admin` needs a real Google session
+curl can't complete. Added `flex-wrap` to `.gauges` so a fourth tile
+doesn't risk overflowing on narrow screens.
+
+### "Wipe My Data" (keep the account, clear the content) + cursor cleanup
+The privacy policy shipped earlier this session already promised a
+"Wipe My Data" button in settings that didn't exist yet — this builds it
+for real, distinct from the existing full "Delete my account":
+- `lib/account.ts#wipeUserData(userId)`: deletes all diary entries
+  outright, and applies the same per-bottle delete-vs-release split that
+  removing a single bottle already uses (`lib/rooms.ts`) to every bottle
+  the user owns — empty ones hard-deleted, replied-to ones just released
+  (`ownerId: null`) so the other person's link stays alive. Unlike
+  `deleteUserAccount`, the `User` row itself is untouched — the session
+  stays valid and the dashboard just comes back empty.
+- New `POST /api/account/wipe` (auth-gated) and
+  `components/WipeDataButton.tsx`, placed directly under "Delete my
+  account" in the dashboard header (now a stacked column: email → Delete
+  my account → Wipe My Data, was a single row).
+- Verified end-to-end with a disposable account: created a diary entry,
+  an empty bottle, and a replied-to bottle, wiped, then checked the DB
+  directly (not through `/api/rooms/[slug]`, which upserts-on-visit and
+  would silently recreate a "deleted" room and mask the result — hit this
+  exact trap once mid-verification before switching to a direct Prisma
+  query). Confirmed: 0 diary entries left, the empty bottle gone
+  entirely, the replied bottle survived with `ownerId: null`, and the
+  user row/session still valid.
+- Also fixed while in there: "Delete my account" was `0.75rem`/`--faint`
+  (hard to read, matches the pattern from the readability pass above) —
+  bumped to `0.9rem`/`--muted`, and the dashboard header's email span
+  (which had been quietly inheriting the header's smaller base
+  font-size) bumped to match.
+- Swept every remaining `cursor: pointer` (22 occurrences across 13
+  component CSS files) to `cursor: default`, and added a global
+  `a { cursor: default }` in `globals.css` — anchor tags get the hand
+  cursor from the browser by default regardless of button-specific CSS,
+  which is why the dashboard's bottle-card links still showed it even
+  after the component-level sweep; this app has never used the pointer
+  cursor anywhere (established back in the 2026-07-17e session for the
+  sign-in buttons) and this closes the last gaps.
+- No schema changes. `tsc`/`eslint`/`next build` clean, `get_runtime_errors`
+  showed nothing new after deploy.
+- **Unrelated finding, not acted on**: spotted several junk `Room` rows in
+  the live DB with slugs like `sitemap.xml`, `company`, `nosotros`,
+  `contato` — bots/crawlers hitting arbitrary paths on the live site,
+  which `getOrCreateRoom`'s upsert-on-any-visit turns into real rows with
+  no owner. Flagged to the user; not fixed, since it's a separate concern
+  from what was asked this session.
