@@ -1,0 +1,103 @@
+.trigger {
+  position: fixed;
+  z-index: 1;
+  bottom: 10px;
+  left: 10px;
+  border: none;
+  background: transparent;
+  padding: 6px 6px 6px 14px;
+  margin: 0;
+  font: inherit;
+  font-size: 0.7rem;
+  color: var(--faint);
+  cursor: pointer;
+}
+
+.trigger:hover {
+  color: var(--fg);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: rgba(17, 17, 17, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal {
+  position: relative;
+  width: min(100%, 560px);
+  max-height: min(80vh, 640px);
+  background: var(--bg);
+  border: 1px solid var(--faint);
+  border-radius: 12px;
+  padding: 28px 8px 24px 28px;
+  box-shadow: 0 20px 60px rgba(17, 17, 17, 0.18);
+  display: flex;
+}
+
+.close {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  width: 44px;
+  height: 44px;
+  font: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--faint);
+  cursor: pointer;
+}
+
+.close:hover {
+  color: var(--fg);
+}
+
+.scroll {
+  overflow-y: auto;
+  padding-right: 20px;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black 12px,
+    black calc(100% - 12px),
+    transparent
+  );
+}
+
+.heading {
+  margin: 0 0 4px;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.effective {
+  margin: 0 0 20px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.scroll h3 {
+  margin: 20px 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.scroll p {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--fg);
+}

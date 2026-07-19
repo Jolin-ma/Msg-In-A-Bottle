@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { getRoomsByOwner } from "@/lib/rooms";
 import ContactInfo from "@/components/ContactInfo";
 import CreateBottleForm from "@/components/CreateBottleForm";
+import DeleteAccountButton from "@/components/DeleteAccountButton";
+import PrivacyPolicy from "@/components/PrivacyPolicy";
 import RemoveBottleButton from "@/components/RemoveBottleButton";
 import SignOutButton from "@/components/SignOutButton";
 import styles from "./page.module.css";
@@ -24,6 +26,7 @@ export default async function DashboardPage() {
       <SignOutButton />
       <div className={styles.header}>
         <span className={styles.email}>{session.user.email}</span>
+        <DeleteAccountButton />
       </div>
 
       <CreateBottleForm />
@@ -73,6 +76,7 @@ export default async function DashboardPage() {
       </div>
 
       <ContactInfo />
+      <PrivacyPolicy />
     </div>
   );
 }

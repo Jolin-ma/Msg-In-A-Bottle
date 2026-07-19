@@ -1,0 +1,18 @@
+.button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--faint);
+  cursor: pointer;
+}
+
+.button:hover:not(:disabled) {
+  color: #b3261e;
+}
+
+.button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
