@@ -100,6 +100,41 @@
   }
 }
 
+.bottleIcon.floatAway {
+  animation: floatAway var(--drift-duration, 7s) ease-in-out forwards;
+}
+
+@keyframes floatAway {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  15% {
+    transform: translate(var(--dx1, 18vw), var(--dy1, 10vh)) rotate(var(--r1, 12deg));
+    opacity: 1;
+  }
+  32% {
+    transform: translate(var(--dx2, -25vw), var(--dy2, -22vh)) rotate(var(--r2, -10deg));
+    opacity: 1;
+  }
+  50% {
+    transform: translate(var(--dx3, 22vw), var(--dy3, -35vh)) rotate(var(--r3, 12deg));
+    opacity: 1;
+  }
+  68% {
+    transform: translate(var(--dx4, -28vw), var(--dy4, -50vh)) rotate(var(--r4, -10deg));
+    opacity: 1;
+  }
+  85% {
+    transform: translate(var(--dx5, 20vw), var(--dy5, -65vh)) rotate(var(--r5, 12deg));
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(var(--dx6, -25vw), var(--dy6, -80vh)) rotate(0deg);
+    opacity: 0;
+  }
+}
+
 .error {
   position: fixed;
   z-index: 1;

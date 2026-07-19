@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import PhysicsCanvas, { type PhysicsCanvasHandle } from "./PhysicsCanvas";
 import BottleMessage from "./BottleMessage";
 import RoomSlugMarker from "./RoomSlugMarker";
+import { randomDriftStyle } from "@/lib/driftStyle";
+import { DRIFT_DURATION_MS } from "@/lib/driftTiming";
 import styles from "./DiaryView.module.css";
 
 export interface DiaryRoomEntry {
@@ -29,6 +31,9 @@ export default function DiaryRoomView({
   const [value, setValue] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [floating, setFloating] = useState(false);
+  const [driftStyle, setDriftStyle] = useState<CSSProperties>({});
+  const [flightId, setFlightId] = useState(0);
 
   useEffect(() => {
     const STAGGER_MS = 90;
@@ -67,6 +72,10 @@ export default function DiaryRoomView({
       setEntries((current) => [...current, entry]);
       setValue("");
       setPending(false);
+      setDriftStyle(randomDriftStyle());
+      setFlightId((id) => id + 1);
+      setFloating(true);
+      window.setTimeout(() => setFloating(false), DRIFT_DURATION_MS);
     } catch {
       setError("Couldn't save that. Try again.");
       setPending(false);
@@ -99,8 +108,16 @@ export default function DiaryRoomView({
           <button type="submit" className={styles.submit} disabled={pending || !value.trim()}>
             add entry
           </button>
+          {/* Keyed by flightId so repeated sends remount the element,
+              restarting the float-away CSS animation each time. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/bottle.png" alt="" className={styles.bottleIcon} />
+          <img
+            key={flightId}
+            src="/bottle.png"
+            alt=""
+            className={`${styles.bottleIcon} ${floating ? styles.floatAway : ""}`}
+            style={floating ? driftStyle : undefined}
+          />
         </div>
       </form>
       {error && <p className={styles.error}>{error}</p>}
