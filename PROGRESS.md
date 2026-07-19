@@ -546,17 +546,41 @@ bottles; the sign-in page's decorative bottles no longer linked anywhere):
   breath, since Vercel's auto-deploy is the only thing keeping deployed
   code in sync with a database both dev and prod share live.**
 
+### Privacy policy overlay + account deletion
+- New `components/PrivacyPolicy.tsx`: a tiny, faint `[privacy]` link
+  (bottom-left, mirroring `ContactInfo`'s bottom-right "Get in touch"
+  trigger) on the sign-in screen (`app/page.tsx`) and the dashboard.
+  Clicking it opens a centered, scrollable overlay (soft-faded scroll
+  edges, closes on backdrop click or Escape) with the user-supplied
+  policy copy verbatim.
+- The policy text promises an in-settings "permanent wipe" option, which
+  didn't exist yet — added it for real rather than shipping a policy that
+  overclaims: `lib/account.ts#deleteUserAccount` + admin-auth-gated
+  `DELETE /api/account` + a "Delete my account" link
+  (`components/DeleteAccountButton.tsx`) in the dashboard header next to
+  the email. Deleting just calls `prisma.user.delete` — the schema's
+  existing FK constraints do the rest: `DiaryEntry` cascade-deletes (its
+  relation is `onDelete: Cascade`), while owned `Room`s and `Feedback`
+  just lose their owner link (`onDelete: SetNull`), matching the
+  established "release a bottle" precedent — a bottle already replied to
+  is a two-way exchange, so it stays live at its link for whoever has it
+  rather than disappearing out from under them. Client calls `signOut()`
+  right after so the session cookie doesn't linger locally.
+- Verified end-to-end against the dev server with a disposable account:
+  created a bottle + a diary entry, deleted the account, confirmed (a)
+  the diary entry was gone (queried directly via a throwaway `tsx`
+  script — `npx tsx --env-file=.env` was needed since plain `tsx` doesn't
+  pick up `.env` the way Next.js does), (b) the bottle survived with
+  `ownerId: null`, (c) the email became immediately re-registerable, (d)
+  no `tsc`/`eslint`/`next build` regressions. No schema migration
+  involved this time, so no repeat of the incident above.
+
 ## Blocked / next steps
 
 - Resend/custom-domain email for feedback replies to non-account users is a
   deliberate non-goal for now (decided 2026-07-18) — admin replies stay
   in-app only, for people with an account. Revisit only if that constraint
   changes.
-- The `msg-in-a-bottle` Vercel project is not reachable through the
-  connected Vercel MCP account/team (`get_project` 404s, doesn't appear in
-  `list_projects` either) — any future Vercel-side config (env vars,
-  redeploys, domain setup) needs the user to do it via the dashboard
-  directly, it can't be automated from here.
 - `PILE_HISTORY_LIMIT` (60, in `lib/rooms.ts`, separate from
   `MAX_LETTER_BODIES`) is still an unvalidated guess at how many past
   messages are worth fetching/replaying per room open — same caveat as
