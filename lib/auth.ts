@@ -20,7 +20,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        // Registration stores emails lowercased — match that here, or
+        // anyone who types their email with a capital letter can't sign in.
+        const user = await prisma.user.findUnique({
+          where: { email: email.toLowerCase() },
+        });
         if (!user || !user.passwordHash) return null;
 
         const isValid = await bcrypt.compare(password, user.passwordHash);
@@ -35,10 +39,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig.callbacks,
     async jwt({ token, user, account }) {
       if (account?.provider === "google" && user?.email) {
+        const email = user.email.toLowerCase();
         const dbUser = await prisma.user.upsert({
-          where: { email: user.email },
+          where: { email },
           update: {},
-          create: { email: user.email, name: user.name ?? null },
+          create: { email, name: user.name ?? null },
         });
         token.id = dbUser.id;
         return token;

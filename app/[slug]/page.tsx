@@ -1,5 +1,6 @@
+import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { getOrCreateRoom, markRoomRead } from "@/lib/rooms";
+import { getRoomBySlug, markRoomRead } from "@/lib/rooms";
 import RoomView from "@/components/RoomView";
 import DiaryRoomView from "@/components/DiaryRoomView";
 
@@ -11,10 +12,21 @@ interface RoomPageProps {
 
 export default async function RoomPage({ params }: RoomPageProps) {
   const { slug } = await params;
-  const room = await getOrCreateRoom(slug);
+  const room = await getRoomBySlug(slug);
+  if (!room) {
+    notFound();
+  }
 
   const session = await auth();
-  if (session?.user && session.user.id === room.ownerId) {
+  const isOwner = Boolean(session?.user && session.user.id === room.ownerId);
+
+  // A diary bottle is a private journal — the slug alone must not open it.
+  // Render it indistinguishably from a room that doesn't exist.
+  if (room.isDiary && !isOwner) {
+    notFound();
+  }
+
+  if (isOwner) {
     await markRoomRead(room.id);
   }
 
@@ -29,7 +41,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
       <DiaryRoomView
         key={room.slug}
         slug={room.slug}
-        ownerName={room.owner?.name ?? room.owner?.email ?? null}
+        ownerName={room.owner?.name ?? null}
         roomPrompt={room.name}
         initialEntries={[...messages].reverse()}
       />
@@ -40,7 +52,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
     <RoomView
       key={room.slug}
       slug={room.slug}
-      ownerName={room.owner?.name ?? room.owner?.email ?? null}
+      ownerName={room.owner?.name ?? null}
       roomPrompt={room.name}
       initialMessages={messages}
     />

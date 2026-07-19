@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin";
@@ -8,8 +9,14 @@ import { getUnreadFeedbackCount } from "@/lib/feedback";
 // instead of a full admin login.
 function hasValidApiKey(request: Request): boolean {
   const key = process.env.ADMIN_API_KEY;
-  if (!key) return false;
-  return request.headers.get("x-admin-key") === key;
+  const provided = request.headers.get("x-admin-key");
+  if (!key || !provided) return false;
+  const keyBuffer = Buffer.from(key);
+  const providedBuffer = Buffer.from(provided);
+  return (
+    keyBuffer.length === providedBuffer.length &&
+    timingSafeEqual(keyBuffer, providedBuffer)
+  );
 }
 
 export async function GET(request: Request) {

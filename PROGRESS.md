@@ -745,3 +745,81 @@ for real, distinct from the existing full "Delete my account":
   which `getOrCreateRoom`'s upsert-on-any-visit turns into real rows with
   no owner. Flagged to the user; not fixed, since it's a separate concern
   from what was asked this session.
+
+## What got built 2026-07-19b (pre-launch security review + fixes)
+
+Full end-to-end security review ahead of soft launch, then fixed everything
+it found. All verified against a running production build (curl, both
+anonymous and authenticated sessions) plus direct DB checks; test data
+cleaned up afterward.
+
+### 1. Diary bottles actually private now
+- `app/[slug]/page.tsx`: a diary room now 404s for anyone but its owner
+  (indistinguishable from a room that doesn't exist), instead of showing
+  every entry to whoever guessed the slug.
+- `POST /api/messages` rejects writes into diary rooms from non-owners
+  (also a 404, same reasoning).
+
+### 2. Owner email no longer leaks
+- `lib/rooms.ts` no longer selects `owner.email`; the room page's caption
+  falls back to nothing instead of the email when the owner never set a
+  name.
+- Removed the unauthenticated `GET /api/rooms/[slug]` entirely — nothing
+  in the client used it, and it returned the raw room JSON including the
+  owner's email.
+
+### 3. Visiting a URL no longer creates a room
+- `getOrCreateRoom` (upsert) replaced with `getRoomBySlug` (lookup);
+  unknown slugs 404 from both the page and `POST /api/messages`. Rooms are
+  only born via `POST /api/bottles`. This closes the crawler-junk-rows
+  problem flagged in the previous session (`sitemap.xml`, `company`, ...)
+  — existing junk rows not yet cleaned up.
+
+### 4. Sign-in email case-insensitive
+- `authorize` now lowercases the email before lookup (registration always
+  stored it lowercased, so `Jane@Gmail.com` could register but not sign
+  back in). Google upsert lowercases too.
+
+### 5. Unguessable bottle links
+- New slugs are `name-{8 random lowercase alphanumerics}` (nanoid
+  `customAlphabet`, ~2.8e12 combinations) — the slug is the only thing
+  protecting a bottle, so it's now a real capability instead of a
+  dictionary-guessable name. Old rooms keep their old slugs/links.
+
+### 6. Admin-email registration blocked
+- `POST /api/auth/register` refuses the admin email (responds exactly like
+  `email_taken`) — the admin gate is an email match and registration is
+  unverified, so on a fresh DB whoever registered it first would have been
+  admin. Admin signs in with Google only.
+
+### 7. Rate limiting
+- New `lib/rateLimit.ts`: fixed-window in-memory per-IP limiter (per
+  process — fine single-instance, swap for a shared store if that changes).
+  Applied: register 5/15min, messages 20/5min, feedback 5/10min → 429
+  `rate_limited`.
+
+### Smaller hardening in the same pass
+- Stale-JWT-after-account-deletion guard: `POST /api/bottles` and
+  `POST /api/diary` check the user row still exists (401 instead of an FK
+  500); `deleteUserAccount` uses `deleteMany` so a double delete is a
+  no-op instead of a P2025.
+- Message text stored trimmed.
+- Security headers in `next.config.ts`: `X-Frame-Options: DENY`,
+  CSP `frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`,
+  `Referrer-Policy: strict-origin-when-cross-origin` (bottle URLs are
+  capabilities — don't leak them via Referer).
+- Constant-time compare for the `x-admin-key` header check.
+
+### Verification notes
+- `tsc`/`eslint`/`next build` clean. Local prod-server testing needs
+  `AUTH_TRUST_HOST=true` (Vercel sets it automatically; without it every
+  auth endpoint 500s with UntrustedHost).
+- Verified live: unknown slug → 404 twice (no row created, confirmed 0
+  matching rooms in DB); diary anonymous read/write → 404, owner → 200/201;
+  bottle page HTML contains owner name but not email; mixed-case sign-in
+  works; 6th register attempt → 429; stale session → 401; double account
+  delete → 200/200.
+- Not done, deliberately: cleanup of the pre-existing crawler junk rooms
+  in the live DB (deleting live rows where `ownerId IS NULL AND 0
+  messages` — wants a human eye first), and no full CSP beyond
+  frame-ancestors.

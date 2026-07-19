@@ -2,10 +2,17 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin";
 import { createFeedback, getAllFeedback, isValidFeedbackText } from "@/lib/feedback";
+import { clientIp, rateLimit } from "@/lib/rateLimit";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const RATE_LIMIT = 5;
+const RATE_WINDOW_MS = 10 * 60 * 1000;
 
 export async function POST(request: Request) {
+  if (!rateLimit(`feedback:${clientIp(request)}`, RATE_LIMIT, RATE_WINDOW_MS)) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+  }
+
   const body = await request.json().catch(() => null);
   const text: unknown = body?.text;
   const contactEmail: unknown = body?.contactEmail;

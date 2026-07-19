@@ -3,13 +3,14 @@ import { auth } from "@/lib/auth";
 import { BOTTLE_ICONS } from "@/lib/bottleIcons";
 import { createOwnedRoom } from "@/lib/rooms";
 import { sanitizeSlug } from "@/lib/slug";
+import { userExists } from "@/lib/users";
 
 const MAX_MESSAGE_LENGTH = 500;
 const MAX_NAME_LENGTH = 100;
 
 export async function POST(request: Request) {
   const session = await auth();
-  if (!session?.user) {
+  if (!session?.user || !(await userExists(session.user.id))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

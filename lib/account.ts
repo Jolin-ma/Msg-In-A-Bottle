@@ -6,7 +6,9 @@ import { prisma } from "@/lib/prisma";
 // replied to is a two-way exchange, so it stays live for whoever has the
 // link rather than being destroyed along with the account.
 export async function deleteUserAccount(userId: string) {
-  await prisma.user.delete({ where: { id: userId } });
+  // deleteMany instead of delete: a stale JWT session can request deletion
+  // of a user row that's already gone, which should be a no-op, not a P2025.
+  await prisma.user.deleteMany({ where: { id: userId } });
 }
 
 // Same content-clearing rule as deleting the account, minus deleting the

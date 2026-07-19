@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { createDiaryEntry, isValidDiaryText } from "@/lib/diary";
+import { userExists } from "@/lib/users";
 
 export async function POST(request: Request) {
   const session = await auth();
-  if (!session?.user) {
+  if (!session?.user || !(await userExists(session.user.id))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

@@ -2,19 +2,13 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import {
   deleteEmptyRoom,
-  getOrCreateRoom,
   getOwnedRoomWithMessageCount,
   releaseRoomOwnership,
 } from "@/lib/rooms";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ slug: string }> },
-) {
-  const { slug } = await params;
-  const room = await getOrCreateRoom(slug);
-  return NextResponse.json(room);
-}
+// No GET here on purpose: the room page fetches its own data server-side,
+// and a public JSON endpoint for arbitrary slugs previously leaked the
+// owner's email and let unauthenticated visits create rooms.
 
 export async function DELETE(
   _request: Request,
