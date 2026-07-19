@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { BOTTLE_ICONS } from "@/lib/bottleIcons";
 import { createOwnedRoom } from "@/lib/rooms";
 import { sanitizeSlug } from "@/lib/slug";
 import { Prisma } from "@/app/generated/prisma/client";
@@ -16,12 +17,18 @@ export async function POST(request: Request) {
   const rawSlug: unknown = body?.slug;
   const rawMessage: unknown = body?.message;
   const rawIsDiary: unknown = body?.isDiary;
+  const rawIconIndex: unknown = body?.iconIndex;
   if (
     typeof rawSlug !== "string" ||
     (rawMessage !== undefined &&
       rawMessage !== null &&
       (typeof rawMessage !== "string" || rawMessage.length > MAX_MESSAGE_LENGTH)) ||
-    (rawIsDiary !== undefined && typeof rawIsDiary !== "boolean")
+    (rawIsDiary !== undefined && typeof rawIsDiary !== "boolean") ||
+    (rawIconIndex !== undefined &&
+      (typeof rawIconIndex !== "number" ||
+        !Number.isInteger(rawIconIndex) ||
+        rawIconIndex < 0 ||
+        rawIconIndex >= BOTTLE_ICONS.length))
   ) {
     return NextResponse.json({ error: "invalid_slug" }, { status: 400 });
   }
@@ -33,9 +40,10 @@ export async function POST(request: Request) {
 
   const message = typeof rawMessage === "string" ? rawMessage.trim() : null;
   const isDiary = typeof rawIsDiary === "boolean" ? rawIsDiary : false;
+  const iconIndex = typeof rawIconIndex === "number" ? rawIconIndex : 0;
 
   try {
-    const room = await createOwnedRoom(slug, session.user.id, message, isDiary);
+    const room = await createOwnedRoom(slug, session.user.id, message, isDiary, iconIndex);
     return NextResponse.json(room, { status: 201 });
   } catch (error) {
     if (

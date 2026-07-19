@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { BOTTLE_ICONS } from "@/lib/bottleIcons";
 import { getRoomsByOwner } from "@/lib/rooms";
 import ContactInfo from "@/components/ContactInfo";
 import CreateBottleForm from "@/components/CreateBottleForm";
@@ -10,8 +11,6 @@ import SignOutButton from "@/components/SignOutButton";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
-
-const BOTTLE_IMAGES = ["/bottle1.png", "/bottle2.png", "/bottle3.png"];
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -35,7 +34,7 @@ export default async function DashboardPage() {
         {bottles.length === 0 && (
           <p className={styles.empty}>No bottles yet. Create one above.</p>
         )}
-        {bottles.map((bottle, index) => {
+        {bottles.map((bottle) => {
           const latest = bottle.messages[0];
           const unread =
             Boolean(latest) &&
@@ -48,7 +47,7 @@ export default async function DashboardPage() {
                 <span className={styles.iconWrap}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={BOTTLE_IMAGES[index % BOTTLE_IMAGES.length]}
+                    src={BOTTLE_ICONS[bottle.iconIndex % BOTTLE_ICONS.length]}
                     alt=""
                     className={styles.icon}
                   />
