@@ -80,7 +80,7 @@
   font-size: 1.2rem;
   line-height: 1;
   color: var(--faint);
-  cursor: pointer;
+  cursor: default;
 }
 
 .close:hover {
@@ -110,7 +110,7 @@
   border-radius: 8px;
   background: transparent;
   padding: 6px;
-  cursor: pointer;
+  cursor: default;
   opacity: 0.6;
   transition: opacity 0.15s ease, background 0.15s ease;
 }
@@ -142,7 +142,7 @@
   font-size: 0.95rem;
   font-style: italic;
   color: var(--muted);
-  cursor: pointer;
+  cursor: default;
   text-align: center;
 }
 
@@ -166,7 +166,7 @@
   font: inherit;
   font-size: 1rem;
   color: var(--fg);
-  cursor: pointer;
+  cursor: default;
 }
 
 .submit:disabled {

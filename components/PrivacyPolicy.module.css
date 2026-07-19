@@ -10,7 +10,7 @@
   font: inherit;
   font-size: 1rem;
   color: var(--muted);
-  cursor: pointer;
+  cursor: default;
 }
 
 .trigger:hover {
@@ -56,7 +56,7 @@
   font-size: 1.2rem;
   line-height: 1;
   color: var(--faint);
-  cursor: pointer;
+  cursor: default;
 }
 
 .close:hover {

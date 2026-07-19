@@ -37,7 +37,7 @@
   padding: 4px;
   font: inherit;
   color: var(--muted);
-  cursor: pointer;
+  cursor: default;
   line-height: 1;
 }
 

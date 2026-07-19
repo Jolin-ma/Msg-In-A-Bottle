@@ -44,13 +44,14 @@
   font: inherit;
   font-size: 0.95rem;
   color: var(--fg);
-  cursor: pointer;
+  cursor: default;
 }
 
 .continue {
   margin-top: 12px;
   font-size: 0.95rem;
   color: var(--muted);
+  cursor: default;
 }
 
 .continue:hover {

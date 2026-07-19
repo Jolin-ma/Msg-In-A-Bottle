@@ -134,7 +134,7 @@
   font: inherit;
   text-align: left;
   padding: 10px 12px;
-  cursor: pointer;
+  cursor: default;
 }
 
 .statusDot {
@@ -261,7 +261,7 @@
   font: inherit;
   font-size: 0.75rem;
   color: var(--muted);
-  cursor: pointer;
+  cursor: default;
 }
 
 .actionButton:hover {
@@ -275,7 +275,7 @@
   font: inherit;
   font-size: 0.75rem;
   color: var(--faint);
-  cursor: pointer;
+  cursor: default;
 }
 
 .actionButtonQuiet:hover {
@@ -293,7 +293,7 @@
   font: inherit;
   font-size: 0.8rem;
   color: var(--muted);
-  cursor: pointer;
+  cursor: default;
 }
 
 .archiveToggle:hover {

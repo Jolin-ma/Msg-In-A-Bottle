@@ -11,7 +11,7 @@
   font-size: 1.1rem;
   line-height: 1;
   color: var(--faint);
-  cursor: pointer;
+  cursor: default;
   transition: color 0.15s ease;
 }
 

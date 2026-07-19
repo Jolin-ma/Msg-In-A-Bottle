@@ -9,6 +9,7 @@ import DeleteAccountButton from "@/components/DeleteAccountButton";
 import PrivacyPolicy from "@/components/PrivacyPolicy";
 import RemoveBottleButton from "@/components/RemoveBottleButton";
 import SignOutButton from "@/components/SignOutButton";
+import WipeDataButton from "@/components/WipeDataButton";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,7 @@ export default async function DashboardPage() {
       <div className={styles.header}>
         <span className={styles.email}>{session.user.email}</span>
         <DeleteAccountButton />
+        <WipeDataButton />
       </div>
 
       <CreateBottleForm />

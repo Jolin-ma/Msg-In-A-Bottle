@@ -7,7 +7,7 @@
   font: inherit;
   font-size: 0.8rem;
   color: var(--muted);
-  cursor: pointer;
+  cursor: default;
   white-space: nowrap;
   transition: color 0.15s ease;
 }
