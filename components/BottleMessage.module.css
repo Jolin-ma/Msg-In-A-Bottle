@@ -17,13 +17,13 @@
   font-family: var(--font-display);
   font-weight: 400;
   color: var(--fg);
-  font-size: clamp(16px, 4.5vw, 20px);
-  opacity: 0.55;
+  font-size: clamp(18px, 5vw, 23px);
+  opacity: 0.85;
 }
 
 .timestamp {
   font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   letter-spacing: 0.02em;
-  color: var(--faint);
+  color: var(--muted);
 }

@@ -1,0 +1,17 @@
+.button {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  padding: 6px 8px;
+  min-height: 40px;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.button:hover {
+  color: var(--fg);
+}

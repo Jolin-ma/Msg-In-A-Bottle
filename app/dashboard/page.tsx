@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { BOTTLE_ICONS } from "@/lib/bottleIcons";
 import { getRoomsByOwner } from "@/lib/rooms";
 import ContactInfo from "@/components/ContactInfo";
+import CopyBottleLinkButton from "@/components/CopyBottleLinkButton";
 import CreateBottleForm from "@/components/CreateBottleForm";
 import DeleteAccountButton from "@/components/DeleteAccountButton";
 import PrivacyPolicy from "@/components/PrivacyPolicy";
@@ -68,6 +69,7 @@ export default async function DashboardPage() {
                   </span>
                 </span>
               </a>
+              {!bottle.isDiary && <CopyBottleLinkButton slug={bottle.slug} />}
               <RemoveBottleButton slug={bottle.slug} hasMessages={count > 0} />
             </div>
           );
