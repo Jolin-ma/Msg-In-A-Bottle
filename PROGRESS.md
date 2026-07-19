@@ -575,6 +575,48 @@ bottles; the sign-in page's decorative bottles no longer linked anywhere):
   no `tsc`/`eslint`/`next build` regressions. No schema migration
   involved this time, so no repeat of the incident above.
 
+### Diary "float away" + per-bottle icon choice
+- The diary compose row's bobbing bottle icon now plays the same
+  randomized float-away drift the bottle-reply flow already had, every
+  time "add entry" is pressed — extracted the drift-path generator out
+  of `MessageInput.tsx` into a shared `lib/driftStyle.ts` (was about to
+  be duplicated a third time). Unlike the reply flow, which navigates
+  away right after, diary composing continues indefinitely, so the icon
+  resets to bobbing after `DRIFT_DURATION_MS` — done by keying the
+  `<img>` on an incrementing `flightId` so React remounts it each send,
+  restarting the CSS animation cleanly (`components/DiaryView.tsx` and
+  `components/DiaryRoomView.tsx`, both share `DiaryView.module.css`).
+- `Room.iconIndex` (new `Int @default(0)` column, migration
+  `20260719001823_add_room_icon_index`) makes a bottle's dashboard icon
+  a real per-bottle choice instead of just cycling `bottle1/2/3.png` by
+  list position. This one was additive/non-destructive, so — unlike the
+  `isPublic` removal earlier this session — running it alone didn't risk
+  breaking the still-deployed old code, confirmed no runtime errors
+  appeared before the matching app code was pushed.
+- UX went through two iterations before landing: first an inline
+  three-icon row in `CreateBottleForm` itself, then per user request
+  moved to a popup that opens when "+ New bottle" is pressed (icons
+  picked from `lib/bottleIcons.ts#BOTTLE_ICONS`, shared with the
+  dashboard's render so both read from one source of truth) — explicitly
+  to leave room for eventually gating some bottle styles behind a paid
+  unlock, though no pricing/locking logic was built now, just the plain
+  array structure that's easy to extend later.
+- Along the way, fixed a real pre-existing bug surfaced by manual
+  testing: leaving the name field empty and pressing "+ New bottle" did
+  nothing with zero feedback (a silent early-return with no error
+  shown) — now shows "Name your bottle first."
+- Verified end-to-end against the dev server: valid `iconIndex` stored
+  correctly, out-of-range value rejected 400, the dashboard renders the
+  exact chosen icon (checked by inspecting the rendered HTML for a
+  specific bottle's `<img src>`, not just an aggregate count) — plus
+  `tsc`/`eslint`/`next build` clean, disposable test data cleaned up
+  after. One dead end during debugging: after the UX iteration, the
+  popup appeared not to open at all in the user's manual test; turned
+  out to be the empty-name silent-return bug above rather than a stale
+  build, though `.next` was cleared and the dev server restarted anyway
+  as a precaution (matches the recurring stale-cache gotcha from prior
+  sessions) before confirming the real cause.
+
 ## Blocked / next steps
 
 - Resend/custom-domain email for feedback replies to non-account users is a
