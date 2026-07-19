@@ -843,3 +843,23 @@ cleaned up afterward.
   icon, "back to shore" link home) instead of Next's default 404 — also
   what a stranger sees when hitting someone else's diary slug, which
   404s on purpose. Verified live: HTTP 404 + new copy.
+
+## What got built 2026-07-19c (diary timestamp readability)
+
+User-reported: the date/time under diary entries is hard to read.
+
+- `components/BottleMessage.module.css`'s `.timestamp` (shared by diary
+  entries and reply timestamps — powers both `/diary` and any room page,
+  including diary bottles) was `var(--muted)` (`#999999`) on the cream
+  `--bg` (`#f7f4ec`), which measures ~2.6:1 contrast — well under
+  readable even before accounting for the small `0.75rem` monospace size.
+  Bumped to a dedicated `#666666` (~5:1) and `0.8rem`. Scoped to this one
+  rule rather than darkening `--muted` globally, since that variable is
+  reused as intentional secondary styling in 15 other components with
+  larger text where the current contrast is a deliberate soft look, not
+  a bug.
+- Verified by creating a disposable diary bottle end-to-end (register,
+  sign in, create, fetch the room page) and confirming the compiled CSS
+  chunk actually shipped `color:#666;font-size:.8rem` on the timestamp
+  rule; `tsc`/`eslint`/`next build` clean. Test account and room deleted
+  after.

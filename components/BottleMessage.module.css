@@ -23,7 +23,9 @@
 
 .timestamp {
   font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   letter-spacing: 0.02em;
-  color: var(--muted);
+  /* var(--muted) measures ~2.6:1 against --bg here — too low to read
+     comfortably at this size. This darker gray holds ~5:1. */
+  color: #666666;
 }
