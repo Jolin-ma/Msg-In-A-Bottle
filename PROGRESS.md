@@ -823,3 +823,23 @@ cleaned up afterward.
   in the live DB (deleting live rows where `ownerId IS NULL AND 0
   messages` — wants a human eye first), and no full CSP beyond
   frame-ancestors.
+
+### Follow-ups in the same session (post-review)
+- Deleted the crawler-minted `favicon.png` room (caught the live deploy —
+  still on the old upsert code until this push — minting it mid-session)
+  and, per explicit confirmation they were test data, the two ownerless
+  diary rooms `hello-world` and `my-dream`.
+- Chased the "timestamps look hours ahead" observation to ground: the DB
+  clock is exactly true UTC (`to_char(now() AT TIME ZONE 'UTC')` matched
+  this machine to the second, TimeZone=GMT) and stored values are correct
+  UTC. The skew was an artifact of the *diagnostic script itself* — raw
+  `pg` parses `timestamp without time zone` columns as machine-local time
+  (UTC-4 here), unlike Prisma's adapter which correctly treats them as
+  UTC. App display was already right: every timestamp renders through
+  `toLocaleString(undefined, ...)` in client components, i.e. the
+  viewer's own local timezone. No code change needed or made.
+- New `app/not-found.tsx` + module CSS: mistyped or let-go bottle links
+  now get an on-theme 404 ("This bottle drifted away…", bobbing bottle
+  icon, "back to shore" link home) instead of Next's default 404 — also
+  what a stranger sees when hitting someone else's diary slug, which
+  404s on purpose. Verified live: HTTP 404 + new copy.
