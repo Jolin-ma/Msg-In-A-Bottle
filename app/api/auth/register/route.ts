@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import bcrypt from "bcryptjs";
 import { Prisma } from "@/app/generated/prisma/client";
 import { isAdminEmail } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { clientIp, rateLimit } from "@/lib/rateLimit";
+import { sendWelcomeEmail } from "@/lib/email";
 
 const MIN_PASSWORD_LENGTH = 8;
 const SALT_ROUNDS = 10;
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
         passwordHash,
       },
     });
+    after(() => sendWelcomeEmail(user.email, user.name));
     return NextResponse.json(
       { id: user.id, email: user.email, name: user.name },
       { status: 201 },
