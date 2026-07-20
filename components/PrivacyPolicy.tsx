@@ -22,7 +22,7 @@ export default function PrivacyPolicy() {
         className={styles.trigger}
         onClick={() => setOpen(true)}
       >
-        [privacy]
+        [Privacy]
       </button>
 
       {open && (
