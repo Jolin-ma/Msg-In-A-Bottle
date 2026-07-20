@@ -1,6 +1,6 @@
 # Msg In A Bottle — Progress Log
 
-Latest session: 2026-07-18 (previous: 2026-07-17e, 2026-07-17d, 2026-07-17c, 2026-07-17b, 2026-07-17, 2026-07-16)
+Latest session: 2026-07-20 (previous: 2026-07-19c, 2026-07-19b, 2026-07-19, 2026-07-18, 2026-07-17e, 2026-07-17d, 2026-07-17c, 2026-07-17b, 2026-07-17, 2026-07-16)
 
 ## What this is
 
@@ -863,3 +863,130 @@ User-reported: the date/time under diary entries is hard to read.
   chunk actually shipped `color:#666;font-size:.8rem` on the timestamp
   rule; `tsc`/`eslint`/`next build` clean. Test account and room deleted
   after.
+
+## What got built 2026-07-20 (transactional emails, a visitor-reply notification loop, hydration fix)
+
+Resend was already wired for the owner-side "someone replied" email
+(`lib/email.ts#sendNewMessageEmail`, shipped 2026-07-17d-era) — this session
+added the missing welcome email, gave every transactional email a real
+design pass, and closed the loop so an anonymous visitor can hear back too.
+
+### 1. Welcome email on account creation
+- New `sendWelcomeEmail(to, name)` in `lib/email.ts`, same best-effort
+  Resend pattern as the existing notifier (never throws — a failed send
+  just logs). Fires via `after()` from two places: `POST
+  /api/auth/register` right after `prisma.user.create`, and the Google
+  OAuth path in `lib/auth.ts`'s `jwt` callback — which required changing
+  that callback from a blind `upsert` to an explicit `findUnique` →
+  `create` so it can tell a first-time sign-in from a returning one
+  (upsert can't distinguish the two, and the email must only fire once).
+- Mentions the diary feature by name, since it's a real second core
+  feature (not just an edge case) new users otherwise wouldn't discover
+  from the bottle-creation flow alone.
+
+### 2. All three transactional emails restyled to match the app
+First pass copied a generic boxed-button email template (bordered CTA
+button, uppercase wordmark banner, divider-line footer) — correctly
+called out as not matching the site's own look. Rebuilt around a shared
+`renderEmail()` helper in `lib/email.ts`:
+- Cream `#f7f4ec` background, centered Georgia/Times New Roman serif
+  (email clients strip web fonts, so this leans on the same fallback
+  stack `globals.css` already declares for Cormorant Garamond), no
+  cards or buttons anywhere.
+- The "CTA" is plain text with a thin bottom hairline — literally the
+  same treatment as `not-found.tsx`'s "back to shore" link and
+  `WelcomePanel`'s "continue to your bottles" — not a colored box.
+  Heading weight is 400 (not bold), matching every heading in the app.
+- Small bobbing-bottle icon (`/bottle.png`) at the top, echoing the 404
+  page.
+- Verified visually via a self-contained artifact preview (both emails'
+  actual generated HTML embedded in iframes) rather than trusting the
+  markup blind.
+
+### 3. Visitor opt-in "notify me when they reply"
+The gap: a friend replying through a copied link has no account and no
+way to know the owner wrote back, short of the owner re-sending the
+same link through the original chat thread every time. Fixed by letting
+the visitor optionally leave an email for that one bottle:
+- Schema: `Room.visitorEmail String?` (migration
+  `20260720040238_add_room_visitor_email`, additive/nullable — safe to
+  run standalone, no repeat of the 2026-07-18 isolated-migration
+  incident).
+- New `POST /api/rooms/[slug]/visitor-email` (no auth — same trust
+  model as posting a message anonymously already has) and
+  `lib/rooms.ts#setVisitorEmail`.
+- `components/NotifyMeCapture.tsx`: shown on the "Delivered." screen
+  (`BottleReleased`, now accepts `children`) only to a non-owner who
+  hasn't already opted in or previously dismissed it (`localStorage`,
+  keyed per-slug — a lazy `useState` initializer, not an effect, so it
+  doesn't trip the `set-state-in-effect` lint rule). The room's
+  post-send auto-redirect to `/dashboard` now waits on this prompt being
+  resolved (submitted or skipped) via a `notifyPromptResolved` flag
+  instead of firing on a bare timer, so it can't yank a visitor away
+  mid-decision.
+- `POST /api/messages` now determines `isOwner` (it previously didn't
+  check who was posting at all) and branches: a visitor reply notifies
+  the owner (existing behavior, now correctly gated), an owner reply
+  notifies the stored `visitorEmail` via new `sendReplyToVisitorEmail`.
+  **Bug fix bundled in**: the old ungated code meant an owner replying
+  in their own bottle got self-notified by email every time — fixed as
+  a side effect of adding the sender check this feature needed anyway.
+- Per explicit follow-up asks: the visitor email also nudges account
+  creation ("Tired of leaving your email each time? Create an account —
+  every reply lands in your own dashboard instead"), and the on-page
+  prompt itself grew a parallel "no thanks · create an account instead"
+  link next to the email field — both pitch the account as a strict
+  upgrade over the one-off opt-in rather than generic marketing copy.
+- Contrast fix, same recurring pattern as the 2026-07-19/19c readability
+  passes: the prompt's "notify me" button and the "no thanks"/"create an
+  account" links were styled with `--muted`/`--faint` respectively,
+  reading as barely-visible. Bumped to match how the site's *real*
+  buttons/links are actually styled elsewhere (`AuthForm.submit` is
+  `--fg`, `AuthForm.toggle` is `--muted`) rather than inventing a
+  lower-contrast variant for this one component.
+- Verified end-to-end with Playwright (no `chromium-cli` on this Windows
+  box, so installed Playwright's Chromium locally in the scratch
+  directory instead — signed up, created a bottle, replied as a visitor
+  in a separate browser context, confirmed the prompt only shows to the
+  visitor and never the owner, submitted an opt-in email, confirmed the
+  owner's second reply attempted to notify it (Resend rejected only
+  because the test used a fake `@example.com` address — expected)).
+  Disposable accounts/rooms cleaned up afterward via a throwaway
+  `npx tsx` script (`import "dotenv/config"` needed since plain `tsx`
+  doesn't load `.env` the way Next.js does — same gotcha noted in the
+  2026-07-18 session).
+
+### 4. Timestamp hydration mismatch (`BottleMessage`, `OperationsDashboard`)
+Both components formatted timestamps with `toLocaleString(undefined,
+...)` — picks up the *runtime's* default locale, which differs between
+the server (Node's system locale) and the browser, so React detected a
+mismatch and regenerated the tree on every load. Pinned both call sites
+to `toLocaleString("en-US", ...)` so server and client always agree.
+Verified by reproducing the exact repro (owner reloading a room with a
+reply already in it) before and after — zero console/hydration errors
+after the fix, where before there was a `react.dev/link/hydration-mismatch`
+error every time.
+
+### Smaller fix
+`components/PrivacyPolicy.tsx`'s corner trigger read `[privacy]` —
+capitalized to `[Privacy]`.
+
+### Removed the hourly desktop notifier (local tooling, not app code)
+The 2026-07-17e-era "check for new feedback every hour, pop a Windows
+balloon" setup was decommissioned per explicit ask: unregistered the
+`MsgInABottle-UnreadCheck` Task Scheduler task and deleted
+`C:\Users\jolin\AdminNotifier\` (`check-unread.ps1` + its
+`last-count.txt` state file) outright. Scoped narrowly to the local
+PowerShell polling — `GET /api/feedback/unread-count` and
+`ADMIN_API_KEY` are still in the app, now unused by anything but left
+in place since they're app code, not local tooling, and weren't part
+of the ask.
+
+### Verified
+`tsc --noEmit`, `eslint`, and `next build` clean after every change this
+session. Playwright (installed ad hoc into the scratch directory, not
+the project) covered everything a real browser session needed — full
+signup → create-bottle → anonymous-reply → notify-opt-in → owner-reply
+loop, screenshotted at each step. All disposable test data (rooms,
+accounts) created during verification was deleted from the shared Neon
+DB afterward.
