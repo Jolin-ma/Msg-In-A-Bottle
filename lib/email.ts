@@ -61,6 +61,58 @@ export async function sendNewMessageEmail(
   }
 }
 
+// Best-effort: same as above — sent to whoever replied to a bottle and
+// opted in to hear back, when the owner writes back in the same room.
+export async function sendReplyToVisitorEmail(
+  to: string,
+  roomSlug: string,
+  roomName: string | null,
+) {
+  if (!resend) {
+    console.warn("RESEND_API_KEY not set — skipping visitor-reply email");
+    return;
+  }
+
+  const link = `${APP_URL}/${roomSlug}`;
+  const label = roomName || "the bottle";
+
+  // They already trusted us with an email once (to hear back on this one
+  // bottle) — worth a soft nudge toward an account, which replaces the
+  // one-off "notify me" with a dashboard for every reply, on every bottle.
+  const html = renderEmail({
+    heading: "They wrote back.",
+    bodyHtml: `
+      <p style="${paragraph}">There's a new message waiting in <strong style="color: ${FG};">${escapeHtml(label)}</strong>.</p>
+      <p style="${paragraph}">Tired of leaving your email each time? <a href="${APP_URL}" style="${anchor}">Create an account</a> —
+      it's free, and every reply lands in your own dashboard instead.</p>
+    `,
+    link: { label: "open it", href: link },
+  });
+
+  const text = `There's a new message waiting in ${label}.
+
+Tired of leaving your email each time? Create an account — it's free, and every reply lands in your own dashboard instead: ${APP_URL}
+
+Open it: ${link}`;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM,
+      to,
+      subject: "They wrote back",
+      html,
+      text,
+    });
+    if (error) {
+      console.error("Failed to send visitor-reply email", error);
+    } else {
+      console.log("Sent visitor-reply email", data);
+    }
+  } catch (error) {
+    console.error("Failed to send visitor-reply email", error);
+  }
+}
+
 // Best-effort: same as above — a failed welcome email must never block
 // account creation or sign-in.
 export async function sendWelcomeEmail(to: string, name: string | null) {

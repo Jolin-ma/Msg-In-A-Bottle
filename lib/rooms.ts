@@ -75,6 +75,16 @@ export async function getRoomsByOwner(ownerId: string) {
   });
 }
 
+// Set by a non-owner visitor who wants an email when the owner replies.
+// Anyone holding the link can call this, same trust model as posting a
+// message — no identity check beyond "not a diary" (diary has no visitors).
+export async function setVisitorEmail(roomId: string, email: string) {
+  await prisma.room.update({
+    where: { id: roomId },
+    data: { visitorEmail: email },
+  });
+}
+
 export async function markRoomRead(roomId: string) {
   await prisma.room.update({
     where: { id: roomId },

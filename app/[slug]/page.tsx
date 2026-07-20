@@ -55,6 +55,8 @@ export default async function RoomPage({ params }: RoomPageProps) {
       ownerName={room.owner?.name ?? null}
       roomPrompt={room.name}
       initialMessages={messages}
+      isOwner={isOwner}
+      hasVisitorEmail={Boolean(room.visitorEmail)}
     />
   );
 }

@@ -1,0 +1,106 @@
+.form {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.prompt {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.input {
+  border: none;
+  outline: none;
+  background: transparent;
+  border-bottom: 1px solid var(--faint);
+  padding: 4px 0;
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: center;
+  color: var(--fg);
+  width: 200px;
+}
+
+.input::placeholder {
+  color: var(--faint);
+}
+
+.input:focus {
+  border-bottom-color: var(--fg);
+}
+
+.input:disabled {
+  opacity: 0.5;
+}
+
+.submit {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--muted);
+  cursor: default;
+  white-space: nowrap;
+}
+
+.submit:hover:not(:disabled) {
+  color: var(--fg);
+}
+
+.submit:disabled {
+  color: var(--faint);
+  cursor: default;
+}
+
+.error {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #b3261e;
+}
+
+.altRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.skip {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--faint);
+  cursor: default;
+}
+
+.skip:hover:not(:disabled) {
+  color: var(--muted);
+}
+
+.divider {
+  font-size: 0.8rem;
+  color: var(--faint);
+}
+
+.createAccount {
+  font-size: 0.8rem;
+  color: var(--faint);
+  border-bottom: 1px solid transparent;
+}
+
+.createAccount:hover {
+  color: var(--muted);
+  border-bottom-color: var(--faint);
+}

@@ -6,6 +6,7 @@ import PhysicsCanvas, { type PhysicsCanvasHandle } from "./PhysicsCanvas";
 import MessageInput from "./MessageInput";
 import BottleMessage from "./BottleMessage";
 import BottleReleased from "./BottleReleased";
+import NotifyMeCapture from "./NotifyMeCapture";
 import RoomSlugMarker from "./RoomSlugMarker";
 import { DRIFT_DURATION_MS } from "@/lib/driftTiming";
 import styles from "./RoomView.module.css";
@@ -21,6 +22,8 @@ interface RoomViewProps {
   initialMessages: RoomMessage[];
   ownerName?: string | null;
   roomPrompt?: string | null;
+  isOwner?: boolean;
+  hasVisitorEmail?: boolean;
 }
 
 export default function RoomView({
@@ -28,6 +31,8 @@ export default function RoomView({
   initialMessages,
   ownerName = null,
   roomPrompt = null,
+  isOwner = false,
+  hasVisitorEmail = false,
 }: RoomViewProps) {
   const router = useRouter();
   const canvasRef = useRef<PhysicsCanvasHandle>(null);
@@ -35,6 +40,17 @@ export default function RoomView({
   const [released, setReleased] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSubmittedOnce, setHasSubmittedOnce] = useState(false);
+
+  // Only a visitor (not the owner, who's already notified via their
+  // account) who hasn't already opted in — or previously said "no thanks"
+  // — gets asked. RoomView is remounted per room (see the `key` in
+  // app/[slug]/page.tsx), so a lazy initializer is enough; no need to
+  // re-derive this after mount.
+  const [notifyPromptResolved, setNotifyPromptResolved] = useState(() => {
+    if (isOwner || hasVisitorEmail) return true;
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(`bottle-notify-skip:${slug}`) === "1";
+  });
 
   // Readable stack is oldest-to-newest so the conversation reads top to
   // bottom in order. Every message — including the newest — also replays as
@@ -53,12 +69,12 @@ export default function RoomView({
   }, []);
 
   useEffect(() => {
-    if (!released) return;
+    if (!released || !notifyPromptResolved) return;
     const timeout = window.setTimeout(() => {
       router.push("/dashboard");
     }, DRIFT_DURATION_MS);
     return () => window.clearTimeout(timeout);
-  }, [released, router]);
+  }, [released, notifyPromptResolved, router]);
 
   async function handleSubmit(text: string) {
     canvasRef.current?.spawnText(text);
@@ -96,7 +112,13 @@ export default function RoomView({
   return (
     <>
       <PhysicsCanvas ref={canvasRef} />
-      {released && <BottleReleased />}
+      {released && (
+        <BottleReleased>
+          {!notifyPromptResolved && (
+            <NotifyMeCapture slug={slug} onDone={() => setNotifyPromptResolved(true)} />
+          )}
+        </BottleReleased>
+      )}
       {!released && chronological.length > 0 && (
         <div className={styles.readingArea}>
           <BottleMessage messages={chronological} />

@@ -34,6 +34,9 @@ model Room {
   ownerId    String?
   owner      User?     @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   lastReadAt DateTime?
+  // Optional: set by a non-owner visitor who wants an email when the owner
+  // replies. No account attached — just an address to notify.
+  visitorEmail String?
 }
 
 model Message {
