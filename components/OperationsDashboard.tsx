@@ -27,8 +27,11 @@ const BAYS: { key: FeedbackCategory; label: string; hint: string }[] = [
   { key: "LOVE", label: "Love & inspiration", hint: "worth keeping" },
 ];
 
+// Pinned locale (not the runtime's default) so server and client render the
+// same string — see components/BottleMessage.tsx for the hydration mismatch
+// this avoids.
 function formatTimestamp(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
+  return new Date(iso).toLocaleString("en-US", {
     month: "short",
     day: "numeric",
     hour: "numeric",
