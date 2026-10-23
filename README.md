@@ -5,7 +5,7 @@ breaks apart into individual letters that fall, collide and pile up into a
 growing bed beneath you, a quiet place to let a thought go. Send a private
 link to a friend and the pile keeps growing together, reply by reply.
 
-![Msg In A Bottle sign-in screen, shown as a project showcase](docs/images/showcase.webp)
+![Msg In A Bottle sign-in screen, with message bottles resting along the bottom](docs/images/sign-in.png)
 
 ## See it
 
